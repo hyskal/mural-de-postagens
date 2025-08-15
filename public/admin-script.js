@@ -41,9 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     logoutBtn.addEventListener('click', () => {
-        adminPage.style.display = 'none';
-        loginModal.style.display = 'flex';
-        passwordInput.value = '';
+        window.location.href = 'index.html';
     });
 
     // Funções de manipulação do modal de edição
