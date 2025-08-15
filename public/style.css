@@ -144,13 +144,13 @@ header h1 {
 .modal-content {
     background-color: #fefefe;
     margin: 5% auto;
-    padding: 25px; /* Reduzido para reduzir a altura do modal */
+    padding: 20px;
     border-radius: 10px;
     width: 90%;
-    max-width: 500px;
+    max-width: 400px;
     position: relative;
     animation: slideInTop 0.4s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* Novo estilo de sombra */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .modal-content-image {
@@ -418,4 +418,11 @@ footer p {
     color: #777;
     margin-top: 5px;
     min-height: 20px;
+}
+
+@media (max-width: 500px) {
+    .modal-content {
+        max-width: 95%;
+        padding: 15px;
+    }
 }
