@@ -39,6 +39,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingPercent = document.getElementById('loading-percent');
     const loadingStatus = document.getElementById('loading-status');
 
+    // Seletor de cores
+    const colorSwatches = document.querySelectorAll('.color-swatch');
+
     // Funções de manipulação dos modais
     if (openModalBtn) {
         openModalBtn.addEventListener('click', () => {
@@ -132,12 +135,21 @@ document.addEventListener('DOMContentLoaded', () => {
             return null;
         }
     }
+    
+    // Função para formatar a data para o formato dd-mm-aaaa
+    const formatarDataExibicao = (data) => {
+        if (!data) return 'N/A';
+        const partes = data.split('T')[0].split('-');
+        return `${partes[2]}-${partes[1]}-${partes[0]}`;
+    };
 
     // Função para criar o elemento de postagem e adicioná-lo ao mural
     function createPostElement(post) {
         console.log('Criando novo elemento de postagem com os dados:', post);
         const postCard = document.createElement('div');
         postCard.classList.add('post-card');
+        
+        postCard.style.backgroundColor = post.color || 'rgba(255, 255, 255, 0.8)';
 
         // Lógica para limitar a descrição e adicionar "Leia Mais"
         let descriptionText = post.description;
@@ -163,12 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         ` : '';
 
-        // Formatação da data para o formato dd-mm-aaaa
-        const formatarDataExibicao = (data) => {
-            if (!data) return 'N/A';
-            const partes = data.split('T')[0].split('-');
-            return `${partes[2]}-${partes[1]}-${partes[0]}`;
-        };
         const formattedPostDate = formatarDataExibicao(post.created_at);
         const formattedPhotoDate = formatarDataExibicao(post.photo_date);
 
@@ -220,9 +226,18 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('post-description').value = post.description;
         document.getElementById('post-author').value = post.author;
         document.getElementById('post-tags').value = post.tags;
-        document.getElementById('photo-date').value = post.photo_date.split('T')[0];
+        document.getElementById('photo-date').value = post.photo_date ? post.photo_date.split('T')[0] : '';
         document.getElementById('post-image').required = false;
         document.getElementById('image-info').style.display = 'block';
+
+        // Seleciona a cor correta no seletor
+        colorSwatches.forEach(swatch => {
+            swatch.classList.remove('selected');
+            if (swatch.dataset.color === post.color) {
+                swatch.classList.add('selected');
+            }
+        });
+
         newPostModal.style.display = 'block';
     }
 
@@ -295,6 +310,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Evento de seleção de cor
+    colorSwatches.forEach(swatch => {
+        swatch.addEventListener('click', () => {
+            colorSwatches.forEach(s => s.classList.remove('selected'));
+            swatch.classList.add('selected');
+        });
+    });
+
     // Evento de envio do formulário
     if (postForm) {
         postForm.addEventListener('submit', async (event) => {
@@ -304,10 +327,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = document.getElementById('post-title').value;
             const description = document.getElementById('post-description').value;
             const author = document.getElementById('post-author').value;
-            const postDate = new Date().toISOString().split('T')[0]; // Data de postagem automática
             const photoDate = document.getElementById('photo-date').value;
             const tags = document.getElementById('post-tags').value;
             const imageFile = document.getElementById('post-image').files[0];
+            const selectedColor = document.querySelector('.color-swatch.selected').dataset.color;
 
             if (!title || !description || !author || !photoDate) {
                 console.warn('Alguns campos do formulário estão vazios.');
@@ -337,9 +360,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 image_url: imageUrl,
                 description,
                 author,
-                post_date: postDate,
                 photo_date: photoDate,
-                tags
+                tags,
+                color: selectedColor
             };
             
             const method = postId ? 'PUT' : 'POST';
@@ -364,12 +387,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('Postagem realizada com sucesso!');
                     window.location.reload();
                 }, 1000);
-
-                if (!postId) {
-                    const savedPost = await response.json();
-                    localStorage.setItem('createdPostId', savedPost.id);
-                    localStorage.setItem('createdPostTime', savedPost.created_at);
-                }
             } catch (error) {
                 console.error('Erro ao salvar a postagem na API:', error);
                 alert('Erro ao salvar a postagem. Tente novamente.');
@@ -386,7 +403,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Altera a mensagem de confirmação para ser genérica
         if (!confirm(`Tem certeza que deseja excluir a postagem?`)) {
             return;
         }
