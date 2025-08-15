@@ -4,6 +4,13 @@ const pool = new Pool({
     connectionString: process.env.NEON_CONNECTION_STRING,
 });
 
+const getDynamicPassword = () => {
+    const date = new Date();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `mural${hours}${minutes}`;
+};
+
 export default async function handler(request, response) {
     try {
         const client = await pool.connect();
@@ -64,7 +71,7 @@ export default async function handler(request, response) {
             const { title, image_url, description, author, photo_date, tags } = request.body;
             const adminPassword = request.query.admin_password;
 
-            if (adminPassword !== 'muralhhmm') {
+            if (adminPassword !== getDynamicPassword()) {
                 const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
                 if (postCheck.rowCount === 0) {
                     return response.status(404).json({ message: 'Postagem não encontrada.' });
@@ -95,7 +102,7 @@ export default async function handler(request, response) {
             const { id } = request.query;
             const adminPassword = request.query.admin_password;
             
-            if (adminPassword !== 'muralhhmm') {
+            if (adminPassword !== getDynamicPassword()) {
                 const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
                 if (postCheck.rowCount === 0) {
                     return response.status(404).json({ message: 'Postagem não encontrada.' });
