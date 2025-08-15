@@ -2,12 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_URL = 'https://mural-de-postagens.vercel.app';
     
     // Função para obter a senha dinâmica (hora e minuto atuais)
-    const getDynamicPassword = () => {
-        const date = new Date();
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `mural${hours}${minutes}`;
-    };
+const getDynamicPassword = () => {
+    const date = new Date();
+    const hours = date.getHours().toString().padStart(2, '0');
+    // Faz a senha ser válida para o minuto atual e o próximo.
+    const currentMinute = date.getMinutes();
+    const minutes = currentMinute.toString().padStart(2, '0');
+    const nextMinute = (currentMinute + 1).toString().padStart(2, '0');
+    return `mural${hours}${minutes}${nextMinute}`;
+};
 
     // Seletores de elementos
     const loginModal = document.getElementById('login-modal');
