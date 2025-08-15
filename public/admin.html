@@ -3,78 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administração - Mural de Postagens</title>
+    <title>Administração do Mural</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        .admin-controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        .admin-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 20px auto;
             padding: 20px;
+        }
+        h1 {
             text-align: center;
         }
-
-        .admin-controls input {
-            padding: 10px;
-            margin: 10px 0;
+        table {
             width: 100%;
-            max-width: 300px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-family: 'Poppins', sans-serif;
+            border-collapse: collapse;
+            margin-top: 20px;
         }
-
-        .post-card .delete-btn {
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .admin-buttons button {
+            margin-right: 5px;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .edit-btn {
+            background-color: #2c3e50;
+            color: white;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .logout-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
             background-color: #e74c3c;
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
+            border-radius: 5px;
             cursor: pointer;
-            font-weight: 600;
-            margin-top: 10px;
-            transition: background-color 0.3s ease;
         }
-
-        .post-card .delete-btn:hover {
-            background-color: #c0392b;
+        .modal-content.edit-modal {
+            max-width: 600px;
         }
-
-        #password-container {
+        .edit-modal form label {
             display: block;
+            margin-top: 10px;
         }
-
-        #mural-container.hidden {
-            display: none;
+        .edit-modal form input[type="text"],
+        .edit-modal form textarea,
+        .edit-modal form input[type="date"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        #login-modal {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .login-content input {
+            padding: 10px;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Painel de Administração</h1>
-    </header>
-
-    <div class="main-container">
-        <div class="admin-controls" id="password-container">
-            <h3>Digite a senha para acessar:</h3>
-            <input type="password" id="admin-password" placeholder="Senha">
-            <button id="access-btn" class="flashcard-button">Acessar</button>
+    <div id="login-modal" class="modal">
+        <div class="login-content">
+            <h2>Acesso Restrito</h2>
+            <p>Digite a senha para acessar o painel de administração.</p>
+            <input type="password" id="password-input" placeholder="Senha">
+            <button id="login-btn" class="flashcard-button">Entrar</button>
         </div>
-
-        <div id="mural-container" class="hidden">
-            </div>
     </div>
 
-    <footer>
-        <p>&copy; 2025 lucas.batista.eduk@gmail.com | Todos os direitos reservados</p>
-    </footer>
+    <div id="admin-page" style="display:none;">
+        <header>
+            <h1>Painel de Administração do Mural</h1>
+        </header>
 
-    <script src="admin-script.js"></script>
+        <div class="admin-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Título</th>
+                        <th>Autor</th>
+                        <th>Data da Postagem</th>
+                        <th>Data da Foto</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="posts-table-body">
+                </tbody>
+            </table>
+        </div>
+        <button id="logout-btn" class="logout-btn">Sair</button>
+    </div>
 
+    <div id="edit-post-modal" class="modal">
+        <div class="modal-content edit-modal">
+            <span id="close-edit-modal" class="close-btn">&times;</span>
+            <h2>Editar Postagem</h2>
+            <form id="edit-post-form">
+                <input type="hidden" id="edit-post-id">
+                <label for="edit-title">Título:</label>
+                <input type="text" id="edit-title" required>
+                <label for="edit-image-url">URL da Imagem:</label>
+                <input type="text" id="edit-image-url" required>
+                <label for="edit-description">Descrição:</label>
+                <textarea id="edit-description" required></textarea>
+                <label for="edit-author">Autor:</label>
+                <input type="text" id="edit-author" required>
+                <label for="edit-tags">Tags (separadas por vírgula):</label>
+                <input type="text" id="edit-tags">
+                <label for="edit-post-date">Data da Postagem:</label>
+                <input type="date" id="edit-post-date" required>
+                <label for="edit-photo-date">Data da Foto:</label>
+                <input type="date" id="edit-photo-date" required>
+                <button type="submit" class="flashcard-button">Salvar Alterações</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
 </body>
 </html>
