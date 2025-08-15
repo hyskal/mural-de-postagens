@@ -271,3 +271,63 @@ footer p {
     font-size: 14px;
     font-weight: 400;
 }
+.controls-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    width: 100%;
+    max-width: 900px;
+}
+.search-container {
+    flex: 1 1 250px;
+    display: flex;
+    gap: 10px;
+}
+.search-container input {
+    flex-grow: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+.sort-container, .pagination-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.pagination-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    margin: 20px auto;
+}
+.pagination-container button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+.pagination-container button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+.post-tags {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.post-tags span {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    cursor: pointer;
+}
