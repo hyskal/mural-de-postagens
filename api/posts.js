@@ -62,18 +62,21 @@ export default async function handler(request, response) {
         } else if (request.method === 'PUT') {
             const { id } = request.query;
             const { title, image_url, description, author, photo_date, tags } = request.body;
+            const adminPassword = request.query.admin_password;
 
-            const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
-            if (postCheck.rowCount === 0) {
-                return response.status(404).json({ message: 'Postagem não encontrada.' });
+            if (adminPassword !== 'muralhhmm') {
+                const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
+                if (postCheck.rowCount === 0) {
+                    return response.status(404).json({ message: 'Postagem não encontrada.' });
+                }
+    
+                const createdTime = new Date(postCheck.rows[0].created_at);
+                const fiveMinutesAgo = new Date(new Date() - (5 * 60 * 1000));
+                if (createdTime < fiveMinutesAgo) {
+                    return response.status(403).json({ message: 'Não é possível editar esta postagem. O limite de 5 minutos foi excedido.' });
+                }
             }
-
-            const createdTime = new Date(postCheck.rows[0].created_at);
-            const fiveMinutesAgo = new Date(new Date() - (5 * 60 * 1000));
-            if (createdTime < fiveMinutesAgo) {
-                return response.status(403).json({ message: 'Não é possível editar esta postagem. O limite de 5 minutos foi excedido.' });
-            }
-
+            
             const query = `
                 UPDATE memorial_schema.memorial SET
                 title = $1,
@@ -90,17 +93,21 @@ export default async function handler(request, response) {
 
         } else if (request.method === 'DELETE') {
             const { id } = request.query;
-            const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
-            if (postCheck.rowCount === 0) {
-                return response.status(404).json({ message: 'Postagem não encontrada.' });
+            const adminPassword = request.query.admin_password;
+            
+            if (adminPassword !== 'muralhhmm') {
+                const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
+                if (postCheck.rowCount === 0) {
+                    return response.status(404).json({ message: 'Postagem não encontrada.' });
+                }
+
+                const createdTime = new Date(postCheck.rows[0].created_at);
+                const fiveMinutesAgo = new Date(new Date() - (5 * 60 * 1000));
+                if (createdTime < fiveMinutesAgo) {
+                    return response.status(403).json({ message: 'Não é possível excluir esta postagem. O limite de 5 minutos foi excedido.' });
+                }
             }
 
-            const createdTime = new Date(postCheck.rows[0].created_at);
-            const fiveMinutesAgo = new Date(new Date() - (5 * 60 * 1000));
-            if (createdTime < fiveMinutesAgo) {
-                return response.status(403).json({ message: 'Não é possível excluir esta postagem. O limite de 5 minutos foi excedido.' });
-            }
-            
             const query = 'DELETE FROM memorial_schema.memorial WHERE id = $1';
             const result = await client.query(query, [id]);
 
