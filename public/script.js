@@ -345,6 +345,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert(`A descrição deve ter no máximo ${LIMIT_DESCRIPTION} caracteres.`);
                 return;
             }
+            
+            // Validação de data futura
+            const today = new Date().toISOString().split('T')[0];
+            if (photoDate > today) {
+                alert('A data da foto não pode ser futura.');
+                return;
+            }
 
             showLoading();
             
