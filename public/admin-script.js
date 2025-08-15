@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = 'https://mural-de-postagens.vercel.app';
     
-    // Função para obter a senha dinâmica (mural + mês + dia)
+    // Função para obter a senha dinâmica (mural + dia + mês)
     const getDynamicPassword = () => {
         const date = new Date();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const day = date.getDate().toString().padStart(2, '0');
-        return `mural${month}${day}`;
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        return `mural${day}${month}`;
     };
 
     // Seletores de elementos
