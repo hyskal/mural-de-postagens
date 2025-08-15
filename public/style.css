@@ -294,7 +294,7 @@ footer p {
 }
 .search-container input {
     flex-grow: 1;
-    padding: 10px; /* Alinhado com a altura dos botões */
+    padding: 6px; /* Alinhado com a altura dos botões */
     border-radius: 8px;
     border: 1px solid var(--border-color);
 }
