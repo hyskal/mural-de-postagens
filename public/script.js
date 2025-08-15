@@ -382,7 +382,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!confirm(`Tem certeza que deseja excluir a postagem com ID ${postId}?`)) {
+        // Altera a mensagem de confirmação para ser genérica
+        if (!confirm(`Tem certeza que deseja excluir a postagem?`)) {
             return;
         }
 
@@ -401,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem('createdPostTime');
             fetchPosts();
         } catch (error) {
-            console.error('Erro ao excluir a postagem:', error);
+            console.error('Erro ao excluir postagem:', error);
             alert('Erro ao excluir a postagem. Tente novamente.');
         }
     }
