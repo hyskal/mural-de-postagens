@@ -2,10 +2,10 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script.');
 
     const API_URL = 'https://mural-de-postagens.vercel.app';
-    const IMG_BB_API_KEY = '416fe9a25d249378346cacff72f7ef2d';
+    const IMG_BB_API_KEYS = ['416fe9a25d249378346cacff72f7ef2d', '8c223ff9c3c267832c26aacb21014602'];
     const EDIT_TIME_LIMIT_MINUTES = 5;
-    const LIMIT_DESCRIPTION = 300; // Limite de caracteres para o formulário de postagem
-    const DISPLAY_LIMIT_DESCRIPTION = 100; // Limite de caracteres para exibição no mural
+    const LIMIT_DESCRIPTION = 300;
+    const DISPLAY_LIMIT_DESCRIPTION = 100;
     const LIMIT_TITLE = 120;
 
     // Estado da paginação
@@ -114,27 +114,32 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('image', imageFile);
         console.log('FormData preparado para envio.');
 
-        try {
-            updateLoading(30, 'Fazendo upload da imagem...');
-            const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMG_BB_API_KEY}`, {
-                method: 'POST',
-                body: formData,
-            });
+        for (const key of IMG_BB_API_KEYS) {
+            try {
+                updateLoading(30, `Fazendo upload da imagem com a chave: ${key.substring(0, 5)}...`);
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${key}`, {
+                    method: 'POST',
+                    body: formData,
+                });
 
-            if (!response.ok) {
-                console.error('Falha na resposta do ImgBB. Status:', response.status, 'Status Text:', response.statusText);
-                throw new Error('Erro no upload da imagem para o ImgBB');
+                if (!response.ok) {
+                    console.warn(`Falha no upload com a chave ${key}. Tentando a próxima.`);
+                    continue;
+                }
+
+                const data = await response.json();
+                console.log('Upload bem-sucedido. URL da imagem:', data.data.url);
+                updateLoading(60, 'Imagem enviada. Publicando no mural...');
+                return data.data.url;
+            } catch (error) {
+                console.warn(`Erro na comunicação com a API do ImgBB com a chave ${key}. Tentando a próxima.`);
+                continue;
             }
-
-            const data = await response.json();
-            console.log('Upload bem-sucedido. URL da imagem:', data.data.url);
-            updateLoading(60, 'Imagem enviada. Publicando no mural...');
-            return data.data.url;
-        } catch (error) {
-            console.error('Erro durante o upload:', error);
-            alert('Erro ao enviar a imagem. Por favor, tente novamente.');
-            return null;
         }
+
+        console.error('Todas as chaves de API falharam no upload.');
+        alert('Erro ao enviar a imagem. Por favor, tente novamente.');
+        return null;
     }
     
     // Função para formatar a data para o formato dd-mm-aaaa
@@ -168,15 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const createdPostId = localStorage.getItem('createdPostId');
         const createdAt = localStorage.getItem('createdPostTime');
         
-        // Log de depuração
-        console.log(`Verificando post ID: ${post.id}`);
-        console.log(`ID do post no localStorage: ${createdPostId}`);
-        console.log(`Data do post no localStorage: ${createdAt}`);
-
         const isEditable = createdPostId === post.id && (new Date() - new Date(createdAt)) < (EDIT_TIME_LIMIT_MINUTES * 60 * 1000);
-        
-        // Log de depuração
-        console.log(`isEditable: ${isEditable}`);
         
         const editDeleteButtons = isEditable ? `
             <div class="edit-delete-buttons">
@@ -351,7 +348,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert(`O título deve ter no máximo ${LIMIT_TITLE} caracteres.`);
                 return;
             }
-            // A validação do formulário deve ser feita com o limite de 300 caracteres
             if (description.length > LIMIT_DESCRIPTION) {
                 alert(`A descrição deve ter no máximo ${LIMIT_DESCRIPTION} caracteres.`);
                 return;
@@ -405,10 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const result = await response.json();
 
-                // Log de depuração
-                console.log('Postagem criada com sucesso. Dados do servidor:', result);
-
-                // Salva o ID e a data de criação no localStorage para permitir edição temporária
                 localStorage.setItem('createdPostId', result.id);
                 localStorage.setItem('createdPostTime', result.created_at);
 
