@@ -12,7 +12,6 @@ const getDynamicPassword = () => {
     const nextMinute = (currentMinute + 1).toString().padStart(2, '0');
     return `mural${hours}${minutes}${nextMinute}`;
 };
-};
 
 export default async function handler(request, response) {
     try {
