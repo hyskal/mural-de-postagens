@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_URL = 'https://mural-de-postagens.vercel.app';
     const IMG_BB_API_KEY = '416fe9a25d249378346cacff72f7ef2d';
     const EDIT_TIME_LIMIT_MINUTES = 5;
-    const LIMIT_DESCRIPTION = 150;
+    const LIMIT_DESCRIPTION = 300;
     const LIMIT_TITLE = 120;
 
     // Estado da paginação
@@ -32,6 +32,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const prevPageBtn = document.getElementById('prev-page-btn');
     const nextPageBtn = document.getElementById('next-page-btn');
     const pageInfoSpan = document.getElementById('page-info');
+
+    // Elementos do loading
+    const loadingModal = document.getElementById('loading-modal');
+    const loadingBarFill = document.querySelector('.loading-bar-fill');
+    const loadingPercent = document.getElementById('loading-percent');
+    const loadingStatus = document.getElementById('loading-status');
 
     // Funções de manipulação dos modais
     if (openModalBtn) {
@@ -75,7 +81,22 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('post-id').value = '';
         document.getElementById('post-image').required = true;
         document.getElementById('image-info').style.display = 'none';
+        postForm.style.display = 'block';
+        loadingModal.classList.add('hidden');
         postForm.reset();
+    }
+
+    // Funções do loading modal
+    function showLoading() {
+        postForm.style.display = 'none';
+        loadingModal.classList.remove('hidden');
+        updateLoading(0, 'Iniciando...');
+    }
+
+    function updateLoading(percent, status) {
+        loadingBarFill.style.width = `${percent}%`;
+        loadingPercent.textContent = `${percent}%`;
+        loadingStatus.textContent = status;
     }
 
     // Função assíncrona para upload de imagem no ImgBB
@@ -90,6 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('FormData preparado para envio.');
 
         try {
+            updateLoading(30, 'Fazendo upload da imagem...');
             const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMG_BB_API_KEY}`, {
                 method: 'POST',
                 body: formData,
@@ -102,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const data = await response.json();
             console.log('Upload bem-sucedido. URL da imagem:', data.data.url);
+            updateLoading(60, 'Imagem enviada. Publicando no mural...');
             return data.data.url;
         } catch (error) {
             console.error('Erro durante o upload:', error);
@@ -141,8 +164,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ` : '';
 
         // Formatação da data para remover T00:00:00.000Z
-        const formattedPostDate = post.post_date ? post.post_date.split('T')[0] : '';
-        const formattedPhotoDate = post.photo_date ? post.photo_date.split('T')[0] : '';
+        const formatarData = (data) => data ? data.split('T')[0] : 'N/A';
+        const formattedPostDate = formatarData(post.created_at);
+        const formattedPhotoDate = formatarData(post.photo_date);
 
         postCard.innerHTML = `
             <h3 class="post-title">${post.title}</h3>
@@ -192,7 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('post-description').value = post.description;
         document.getElementById('post-author').value = post.author;
         document.getElementById('post-tags').value = post.tags;
-        document.getElementById('post-date').value = post.post_date.split('T')[0];
         document.getElementById('photo-date').value = post.photo_date.split('T')[0];
         document.getElementById('post-image').required = false;
         document.getElementById('image-info').style.display = 'block';
@@ -272,18 +295,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (postForm) {
         postForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            console.log('Formulário de postagem enviado. Coletando dados...');
-
+            
             const postId = document.getElementById('post-id').value;
             const title = document.getElementById('post-title').value;
             const description = document.getElementById('post-description').value;
             const author = document.getElementById('post-author').value;
-            const postDate = document.getElementById('post-date').value;
+            const postDate = new Date().toISOString().split('T')[0]; // Data de postagem automática
             const photoDate = document.getElementById('photo-date').value;
             const tags = document.getElementById('post-tags').value;
             const imageFile = document.getElementById('post-image').files[0];
 
-            if (!title || !description || !author || !postDate || !photoDate) {
+            if (!title || !description || !author || !photoDate) {
                 console.warn('Alguns campos do formulário estão vazios.');
                 alert('Por favor, preencha todos os campos obrigatórios.');
                 return;
@@ -294,12 +316,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            console.log('Dados do formulário:', { postId, title, description, author, postDate, photoDate, tags, imageFile });
+            showLoading();
             
             let imageUrl = null;
             if (imageFile) {
                 imageUrl = await uploadImage(imageFile);
                 if (!imageUrl) {
+                    loadingModal.classList.add('hidden');
+                    postForm.style.display = 'block';
                     return;
                 }
             }
@@ -318,6 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const endpoint = postId ? `${API_URL}/api/posts?id=${postId}` : `${API_URL}/api/posts`;
             
             try {
+                updateLoading(80, 'Conectando ao banco de dados...');
                 const response = await fetch(endpoint, {
                     method: method,
                     headers: {
@@ -330,20 +355,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('Erro ao salvar a postagem na API');
                 }
                 
-                console.log('Postagem salva na API com sucesso!');
+                updateLoading(100, 'Publicando...');
+                setTimeout(() => {
+                    alert('Postagem realizada com sucesso!');
+                    window.location.reload();
+                }, 1000);
+
                 if (!postId) {
                     const savedPost = await response.json();
                     localStorage.setItem('createdPostId', savedPost.id);
                     localStorage.setItem('createdPostTime', savedPost.created_at);
                 }
-
-                muralContainer.innerHTML = '';
-                fetchPosts();
-                newPostModal.style.display = 'none';
-                postForm.reset();
             } catch (error) {
                 console.error('Erro ao salvar a postagem na API:', error);
                 alert('Erro ao salvar a postagem. Tente novamente.');
+                loadingModal.classList.add('hidden');
+                postForm.style.display = 'block';
             }
         });
     }
