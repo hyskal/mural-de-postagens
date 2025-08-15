@@ -167,7 +167,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const createdPostId = localStorage.getItem('createdPostId');
         const createdAt = localStorage.getItem('createdPostTime');
+        
+        // Log de depuração
+        console.log(`Verificando post ID: ${post.id}`);
+        console.log(`ID do post no localStorage: ${createdPostId}`);
+        console.log(`Data do post no localStorage: ${createdAt}`);
+
         const isEditable = createdPostId === post.id && (new Date() - new Date(createdAt)) < (EDIT_TIME_LIMIT_MINUTES * 60 * 1000);
+        
+        // Log de depuração
+        console.log(`isEditable: ${isEditable}`);
         
         const editDeleteButtons = isEditable ? `
             <div class="edit-delete-buttons">
@@ -395,6 +404,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 const result = await response.json();
+
+                // Log de depuração
+                console.log('Postagem criada com sucesso. Dados do servidor:', result);
 
                 // Salva o ID e a data de criação no localStorage para permitir edição temporária
                 localStorage.setItem('createdPostId', result.id);
