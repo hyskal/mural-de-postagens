@@ -8,6 +8,61 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .controls-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            width: 100%;
+            max-width: 900px;
+        }
+        .search-container {
+            flex: 1 1 250px;
+            display: flex;
+            gap: 10px;
+        }
+        .search-container input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .sort-container, .pagination-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .pagination-container button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .pagination-container button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .post-tags {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .post-tags span {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 
@@ -16,10 +71,36 @@
     </header>
 
     <div class="main-container">
-        <button id="open-post-modal" class="flashcard-button">Nova Postagem</button>
+        <div class="controls-container">
+            <button id="open-post-modal" class="flashcard-button">Nova Postagem</button>
+
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Buscar por título ou autor...">
+                <button id="search-btn" class="flashcard-button">Buscar</button>
+            </div>
+            
+            <div class="sort-container">
+                <label for="sort-by">Ordenar por:</label>
+                <select id="sort-by">
+                    <option value="post_date">Data</option>
+                    <option value="title">Título</option>
+                    <option value="author">Autor</option>
+                </select>
+                <select id="sort-order">
+                    <option value="desc">Decrescente</option>
+                    <option value="asc">Crescente</option>
+                </select>
+            </div>
+        </div>
 
         <div id="mural-container">
             </div>
+
+        <div class="pagination-container">
+            <button id="prev-page-btn" disabled>Anterior</button>
+            <span id="page-info">Página 1</span>
+            <button id="next-page-btn">Próximo</button>
+        </div>
     </div>
 
     <div id="new-post-modal" class="modal">
@@ -38,6 +119,9 @@
 
                 <label for="post-author">Autor(es):</label>
                 <input type="text" id="post-author" required>
+                
+                <label for="post-tags">Tags (separadas por vírgula):</label>
+                <input type="text" id="post-tags" placeholder="Ex: coleta, análise, segurança">
 
                 <label for="post-date">Data:</label>
                 <input type="date" id="post-date" required>
