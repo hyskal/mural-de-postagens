@@ -63,6 +63,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    window.addEventListener('click', (event) => {
+        if (event.target === newPostModal) {
+            console.log('Clique fora do modal de postagem. Ocultando modal.');
+            newPostModal.style.display = 'none';
+            postForm.reset();
+        }
+        if (event.target === enlargedImageModal) {
+            console.log('Clique fora do modal de imagem ampliada. Ocultando modal.');
+            enlargedImageModal.style.display = 'none';
+        }
+    });
+
     function resetPostModal() {
         document.getElementById('modal-title').textContent = 'Nova Postagem';
         document.getElementById('submit-post-btn').textContent = 'Postar';
@@ -151,10 +163,14 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         ` : '';
 
-        // Formatação da data para remover T00:00:00.000Z
-        const formatarData = (data) => data ? data.split('T')[0] : 'N/A';
-        const formattedPostDate = formatarData(post.created_at);
-        const formattedPhotoDate = formatarData(post.photo_date);
+        // Formatação da data para o formato dd-mm-aaaa
+        const formatarDataExibicao = (data) => {
+            if (!data) return 'N/A';
+            const partes = data.split('T')[0].split('-');
+            return `${partes[2]}-${partes[1]}-${partes[0]}`;
+        };
+        const formattedPostDate = formatarDataExibicao(post.created_at);
+        const formattedPhotoDate = formatarDataExibicao(post.photo_date);
 
         postCard.innerHTML = `
             <h3 class="post-title">${post.title}</h3>
