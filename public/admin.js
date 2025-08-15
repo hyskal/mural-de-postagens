@@ -1,6 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = 'https://mural-de-postagens.vercel.app';
-    const PASSWORD = 'sua_senha_secreta'; // Mude isso para uma senha segura!
+    
+    // Função para obter a senha dinâmica (hora e minuto atuais)
+    const getDynamicPassword = () => {
+        const date = new Date();
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `mural${hours}${minutes}`;
+    };
 
     // Seletores de elementos
     const loginModal = document.getElementById('login-modal');
@@ -19,12 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const editDescription = document.getElementById('edit-description');
     const editAuthor = document.getElementById('edit-author');
     const editTags = document.getElementById('edit-tags');
-    const editPostDate = document.getElementById('edit-post-date');
     const editPhotoDate = document.getElementById('edit-photo-date');
 
     // Validação de senha
     loginBtn.addEventListener('click', () => {
-        if (passwordInput.value === PASSWORD) {
+        if (passwordInput.value === getDynamicPassword()) {
             loginModal.style.display = 'none';
             adminPage.style.display = 'block';
             fetchPosts();
@@ -68,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${post.id.substring(0, 8)}...</td>
                     <td>${post.title}</td>
                     <td>${post.author}</td>
-                    <td>${post.post_date ? post.post_date.split('T')[0] : ''}</td>
+                    <td>${post.created_at ? post.created_at.split('T')[0] : ''}</td>
                     <td>${post.photo_date ? post.photo_date.split('T')[0] : ''}</td>
                     <td>
                         <button class="edit-btn" data-id="${post.id}">Editar</button>
@@ -108,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
         editDescription.value = post.description;
         editAuthor.value = post.author;
         editTags.value = post.tags;
-        editPostDate.value = post.post_date.split('T')[0];
         editPhotoDate.value = post.photo_date.split('T')[0];
         editPostModal.style.display = 'block';
     }
@@ -124,12 +129,12 @@ document.addEventListener('DOMContentLoaded', () => {
             description: editDescription.value,
             author: editAuthor.value,
             tags: editTags.value,
-            post_date: editPostDate.value,
             photo_date: editPhotoDate.value,
         };
 
         try {
-            const response = await fetch(`${API_URL}/api/posts?id=${postId}`, {
+            const dynamicPassword = getDynamicPassword();
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${dynamicPassword}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(postData),
@@ -151,7 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Função para excluir postagem
     async function deletePost(postId) {
         try {
-            const response = await fetch(`${API_URL}/api/posts?id=${postId}`, {
+            const dynamicPassword = getDynamicPassword();
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${dynamicPassword}`, {
                 method: 'DELETE'
             });
 
