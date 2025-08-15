@@ -45,7 +45,7 @@ export default async function handler(request, response) {
             const sanitizedSortOrder = allowedSortOrder.includes(sortOrder) ? sortOrder : 'desc';
 
             const dataQuery = `
-                SELECT id, title, description, author, post_date, photo_date, image_url, tags, created_at, color FROM memorial_schema.memorial
+                SELECT id, title, description, author, photo_date, image_url, tags, created_at, color FROM memorial_schema.memorial
                 ${whereClause}
                 ORDER BY ${sanitizedSortBy} ${sanitizedSortOrder}
                 LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
