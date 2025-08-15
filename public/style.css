@@ -92,7 +92,7 @@ header h1 {
 }
 
 .post-image {
-    max-width: 360px; /* Corrigido para 360px */
+    max-width: 290px;
     height: auto;
     border-radius: 8px;
     cursor: pointer;
@@ -144,13 +144,13 @@ header h1 {
 .modal-content {
     background-color: #fefefe;
     margin: 5% auto;
-    padding: 25px;
+    padding: 30px;
     border-radius: 10px;
     width: 90%;
     max-width: 500px;
     position: relative;
     animation: slideInTop 0.4s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--glass-shadow);
 }
 
 .modal-content-image {
@@ -213,27 +213,21 @@ header h1 {
     font-family: 'Poppins', sans-serif;
 }
 
-.modal-content form label {
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 5px;
-}
-
 .modal-content form input[type="text"],
 .modal-content form input[type="date"],
 .modal-content form textarea {
     padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background: #f8f8f8;
-    transition: border-color 0.3s ease;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.6);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .modal-content form input:focus,
 .modal-content form textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(44, 62, 80, 0.1);
+    box-shadow: 0 0 5px rgba(44, 62, 80, 0.3);
 }
 
 .flashcard-button {
@@ -337,30 +331,12 @@ footer p {
     font-size: 0.8em;
     cursor: pointer;
 }
-
-/* Container para o label "Tema:" e os seletores de cor */
-.color-theme-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-    color: var(--text-color);
-}
-
-.color-theme-container label {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 0;
-}
-
-/* Ajustes no seletor de cores para alinhamento e espaçamento */
+/* Estilos do seletor de cores */
 .color-selector {
     display: flex;
-    justify-content: flex-start;
-    gap: 8px;
-    margin-top: 0;
+    justify-content: space-between;
+    margin-top: 10px;
 }
-
 .color-swatch {
     width: 30px;
     height: 30px;
