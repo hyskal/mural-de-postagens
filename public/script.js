@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script.');
 
     // Configuração da API de back-end
-    const API_URL = 'https://seu-projeto-vercel.vercel.app'; // <--- SUBSTITUA AQUI!
+    const API_URL = 'https://mural-de-postagens.vercel.app';
     const IMG_BB_API_KEY = '416fe9a25d249378346cacff72f7ef2d';
 
     // Seletores de elementos do DOM
