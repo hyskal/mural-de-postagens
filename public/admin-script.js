@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date();
         const hours = now.getHours().toString().padStart(2, '0');
         const minutes = now.getMinutes().toString().padStart(2, '0');
-        return `${hours}${minutes}`;
+        // Senha agora é 'mural' + 'hh' + 'mm'
+        return `mural${hours}${minutes}`;
     }
 
     function checkPassword() {
@@ -102,5 +103,4 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Erro ao excluir a postagem. Tente novamente.');
         }
     }
-
 });
