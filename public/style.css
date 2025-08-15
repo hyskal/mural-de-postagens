@@ -92,7 +92,7 @@ header h1 {
 }
 
 .post-image {
-    max-width: 280px;
+    max-width: 300px;
     height: auto;
     border-radius: 8px;
     cursor: pointer;
