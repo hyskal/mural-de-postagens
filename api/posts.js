@@ -31,14 +31,14 @@ export default async function handler(request, response) {
             const totalResult = await client.query(totalQuery, queryParams);
             const totalPosts = parseInt(totalResult.rows[0].count);
 
-            const allowedSortBy = ['post_date', 'title', 'author', 'created_at'];
+            const allowedSortBy = ['post_date', 'photo_date', 'title', 'author', 'created_at'];
             const allowedSortOrder = ['asc', 'desc'];
             
             const sanitizedSortBy = allowedSortBy.includes(sortBy) ? sortBy : 'post_date';
             const sanitizedSortOrder = allowedSortOrder.includes(sortOrder) ? sortOrder : 'desc';
 
             const dataQuery = `
-                SELECT id, title, description, author, post_date, image_url, tags, created_at FROM memorial_schema.memorial
+                SELECT id, title, description, author, post_date, photo_date, image_url, tags, created_at FROM memorial_schema.memorial
                 ${whereClause}
                 ORDER BY ${sanitizedSortBy} ${sanitizedSortOrder}
                 LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
@@ -50,18 +50,18 @@ export default async function handler(request, response) {
             response.status(200).json({ posts, total: totalPosts });
 
         } else if (request.method === 'POST') {
-            const { title, image_url, description, author, post_date, tags } = request.body;
+            const { title, image_url, description, author, post_date, photo_date, tags } = request.body;
             const query = `
-                INSERT INTO memorial_schema.memorial (title, image_url, description, author, post_date, tags)
-                VALUES ($1, $2, $3, $4, $5, $6)
+                INSERT INTO memorial_schema.memorial (title, image_url, description, author, post_date, photo_date, tags)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING id, created_at
             `;
-            const result = await client.query(query, [title, image_url, description, author, post_date, tags]);
+            const result = await client.query(query, [title, image_url, description, author, post_date, photo_date, tags]);
             response.status(201).json(result.rows[0]);
 
         } else if (request.method === 'PUT') {
             const { id } = request.query;
-            const { title, image_url, description, author, post_date, tags } = request.body;
+            const { title, image_url, description, author, post_date, photo_date, tags } = request.body;
 
             const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
             if (postCheck.rowCount === 0) {
@@ -81,10 +81,11 @@ export default async function handler(request, response) {
                 description = $3,
                 author = $4,
                 post_date = $5,
-                tags = $6
-                WHERE id = $7
+                photo_date = $6,
+                tags = $7
+                WHERE id = $8
             `;
-            const queryParams = [title, image_url, description, author, post_date, tags, id];
+            const queryParams = [title, image_url, description, author, post_date, photo_date, tags, id];
             await client.query(query, queryParams);
             response.status(200).json({ message: 'Postagem atualizada com sucesso!' });
 
