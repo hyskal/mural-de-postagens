@@ -2,10 +2,10 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script.');
 
     const API_URL = 'https://mural-de-postagens.vercel.app';
-    const IMG_BB_API_KEYS = ['416fe9a25d249378346cacff72f7ef2d', '8c223ff9c3c267832c26aacb21014602', '6d207e02198a847aa98d0a2a901485a5'];
+    const IMG_BB_API_KEYS = ['8c223ff9c3c267832c26aacb21014602', '6d207e02198a847aa98d0a2a901485a5'];
     const EDIT_TIME_LIMIT_MINUTES = 5;
-    const LIMIT_DESCRIPTION = 300; // Limite de caracteres para o formulário de postagem
-    const DISPLAY_LIMIT_DESCRIPTION = 100; // Limite de caracteres para exibição no mural
+    const LIMIT_DESCRIPTION = 300;
+    const DISPLAY_LIMIT_DESCRIPTION = 100;
     const LIMIT_TITLE = 120;
 
     // Estado da paginação
