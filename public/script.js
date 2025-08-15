@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_URL = 'https://mural-de-postagens.vercel.app';
     const IMG_BB_API_KEY = '416fe9a25d249378346cacff72f7ef2d';
     const EDIT_TIME_LIMIT_MINUTES = 5;
-    const LIMIT_DESCRIPTION = 100; // Alterado para 100 caracteres
+    const LIMIT_DESCRIPTION = 300; // Limite de caracteres para o formulário de postagem
+    const DISPLAY_LIMIT_DESCRIPTION = 100; // Limite de caracteres para exibição no mural
     const LIMIT_TITLE = 120;
 
     // Estado da paginação
@@ -151,10 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         postCard.style.backgroundColor = post.color || 'rgba(255, 255, 255, 0.8)';
 
-        // Lógica para limitar a descrição e adicionar "Leia Mais"
+        // Lógica para limitar a descrição para exibição (100 caracteres)
         let descriptionText = post.description;
-        if (descriptionText && descriptionText.length > LIMIT_DESCRIPTION) {
-            descriptionText = descriptionText.substring(0, LIMIT_DESCRIPTION) + '... <a href="#" class="read-more" data-fulltext="' + post.description.replace(/"/g, '&quot;') + '">Leia Mais</a>';
+        if (descriptionText && descriptionText.length > DISPLAY_LIMIT_DESCRIPTION) {
+            descriptionText = descriptionText.substring(0, DISPLAY_LIMIT_DESCRIPTION) + '... <a href="#" class="read-more" data-fulltext="' + post.description.replace(/"/g, '&quot;') + '">Leia Mais</a>';
         }
         
         // Exibição de tags
@@ -341,6 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert(`O título deve ter no máximo ${LIMIT_TITLE} caracteres.`);
                 return;
             }
+            // A validação do formulário deve ser feita com o limite de 300 caracteres
             if (description.length > LIMIT_DESCRIPTION) {
                 alert(`A descrição deve ter no máximo ${LIMIT_DESCRIPTION} caracteres.`);
                 return;
@@ -392,6 +394,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('Erro ao salvar a postagem na API');
                 }
                 
+                const result = await response.json();
+
+                // Salva o ID e a data de criação no localStorage para permitir edição temporária
+                localStorage.setItem('createdPostId', result.id);
+                localStorage.setItem('createdPostTime', result.created_at);
+
                 updateLoading(100, 'Publicando...');
                 setTimeout(() => {
                     alert('Postagem realizada com sucesso!');
