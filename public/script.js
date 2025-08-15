@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const API_URL = 'https://mural-de-postagens.vercel.app';
     const IMG_BB_API_KEY = '416fe9a25d249378346cacff72f7ef2d';
-
+    const EDIT_TIME_LIMIT_MINUTES = 5;
     const LIMIT_DESCRIPTION = 150;
 
     // Estado da paginação
@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openModalBtn.addEventListener('click', () => {
             console.log('Botão "Nova Postagem" clicado. Exibindo modal.');
             newPostModal.style.display = 'block';
+            resetPostModal();
         });
     }
 
@@ -66,6 +67,15 @@ document.addEventListener('DOMContentLoaded', () => {
             enlargedImageModal.style.display = 'none';
         }
     });
+
+    function resetPostModal() {
+        document.getElementById('modal-title').textContent = 'Nova Postagem';
+        document.getElementById('submit-post-btn').textContent = 'Postar';
+        document.getElementById('post-id').value = '';
+        document.getElementById('post-image').required = true;
+        document.getElementById('image-info').style.display = 'none';
+        postForm.reset();
+    }
 
     // Função assíncrona para upload de imagem no ImgBB
     async function uploadImage(imageFile) {
@@ -118,6 +128,17 @@ document.addEventListener('DOMContentLoaded', () => {
             tagsHtml = '<div class="post-tags">' + tagsArray.map(tag => `<span>#${tag}</span>`).join('') + '</div>';
         }
 
+        const createdPostId = localStorage.getItem('createdPostId');
+        const createdAt = localStorage.getItem('createdPostTime');
+        const isEditable = createdPostId === post.id && (new Date() - new Date(createdAt)) < (EDIT_TIME_LIMIT_MINUTES * 60 * 1000);
+        
+        const editDeleteButtons = isEditable ? `
+            <div class="edit-delete-buttons">
+                <button class="edit-btn" data-id="${post.id}">Editar</button>
+                <button class="delete-btn" data-id="${post.id}">Excluir</button>
+            </div>
+        ` : '';
+
         postCard.innerHTML = `
             <h3 class="post-title">${post.title}</h3>
             <div class="post-image-container">
@@ -129,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="post-author">Autor: ${post.author}</span>
                 <span class="post-date">Data: ${post.post_date}</span>
             </div>
+            ${editDeleteButtons}
         `;
         muralContainer.appendChild(postCard);
 
@@ -148,8 +170,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetchPosts();
             });
         });
+
+        // Adiciona eventos para os botões de editar e excluir
+        if (isEditable) {
+            postCard.querySelector('.edit-btn').addEventListener('click', () => openEditModal(post));
+            postCard.querySelector('.delete-btn').addEventListener('click', () => deletePost(post.id, post.created_at));
+        }
     }
-    
+
+    function openEditModal(post) {
+        document.getElementById('modal-title').textContent = 'Editar Postagem';
+        document.getElementById('submit-post-btn').textContent = 'Salvar Alterações';
+        document.getElementById('post-id').value = post.id;
+        document.getElementById('post-title').value = post.title;
+        document.getElementById('post-description').value = post.description;
+        document.getElementById('post-author').value = post.author;
+        document.getElementById('post-tags').value = post.tags;
+        document.getElementById('post-date').value = post.post_date;
+        document.getElementById('post-image').required = false;
+        document.getElementById('image-info').style.display = 'block';
+        newPostModal.style.display = 'block';
+    }
+
     // Função para carregar as postagens da nova API
     async function fetchPosts() {
         console.log('Buscando postagens da nova API...');
@@ -225,6 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             console.log('Formulário de postagem enviado. Coletando dados...');
 
+            const postId = document.getElementById('post-id').value;
             const title = document.getElementById('post-title').value;
             const description = document.getElementById('post-description').value;
             const author = document.getElementById('post-author').value;
@@ -238,44 +281,88 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            console.log('Dados do formulário:', { title, description, author, date, tags, imageFile });
+            console.log('Dados do formulário:', { postId, title, description, author, date, tags, imageFile });
             
-            const imageUrl = await uploadImage(imageFile);
-            
-            if (imageUrl) {
-                const newPost = {
-                    title: title,
-                    image_url: imageUrl,
-                    description: description,
-                    author: author,
-                    post_date: date,
-                    tags: tags // Adicionando tags
-                };
-
-                try {
-                    const response = await fetch(`${API_URL}/api/posts`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(newPost)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Erro ao salvar a postagem na API');
-                    }
-                    
-                    console.log('Postagem salva na API com sucesso!');
-                    muralContainer.innerHTML = '';
-                    fetchPosts();
-                    newPostModal.style.display = 'none';
-                    postForm.reset();
-                } catch (error) {
-                    console.error('Erro ao salvar a postagem na API:', error);
-                    alert('Erro ao salvar a postagem. Tente novamente.');
+            let imageUrl = null;
+            if (imageFile) {
+                imageUrl = await uploadImage(imageFile);
+                if (!imageUrl) {
+                    return;
                 }
             }
+
+            const postData = {
+                title,
+                image_url: imageUrl,
+                description,
+                author,
+                post_date: date,
+                tags
+            };
+            
+            const method = postId ? 'PUT' : 'POST';
+            const endpoint = postId ? `${API_URL}/api/posts?id=${postId}` : `${API_URL}/api/posts`;
+            
+            try {
+                const response = await fetch(endpoint, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(postData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao salvar a postagem na API');
+                }
+                
+                console.log('Postagem salva na API com sucesso!');
+                if (!postId) {
+                    const savedPost = await response.json();
+                    localStorage.setItem('createdPostId', savedPost.id);
+                    localStorage.setItem('createdPostTime', savedPost.created_at);
+                }
+
+                muralContainer.innerHTML = '';
+                fetchPosts();
+                newPostModal.style.display = 'none';
+                postForm.reset();
+            } catch (error) {
+                console.error('Erro ao salvar a postagem na API:', error);
+                alert('Erro ao salvar a postagem. Tente novamente.');
+            }
         });
+    }
+
+    async function deletePost(postId, createdAt) {
+        const fiveMinutesAgo = new Date(new Date() - (EDIT_TIME_LIMIT_MINUTES * 60 * 1000));
+        if (new Date(createdAt) < fiveMinutesAgo) {
+            alert('Não é possível excluir esta postagem. O limite de 5 minutos foi excedido.');
+            return;
+        }
+
+        if (!confirm(`Tem certeza que deseja excluir a postagem com ID ${postId}?`)) {
+            return;
+        }
+
+        console.log(`Solicitando exclusão da postagem com ID: ${postId}`);
+        try {
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao excluir a postagem');
+            }
+
+            console.log('Postagem excluída com sucesso!');
+            localStorage.removeItem('createdPostId');
+            localStorage.removeItem('createdPostTime');
+            fetchPosts();
+        } catch (error) {
+            console.error('Erro ao excluir a postagem:', error);
+            alert('Erro ao excluir a postagem. Tente novamente.');
+        }
     }
 
     window.enlargeImage = (imageUrl) => {
