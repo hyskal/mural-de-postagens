@@ -62,6 +62,28 @@
             font-size: 0.8em;
             cursor: pointer;
         }
+        .edit-delete-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .edit-btn, .delete-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
     </style>
 </head>
 <body>
@@ -106,13 +128,15 @@
     <div id="new-post-modal" class="modal">
         <div class="modal-content">
             <span id="close-post-modal" class="close-btn">&times;</span>
-            <h2>Nova Postagem</h2>
+            <h2 id="modal-title">Nova Postagem</h2>
             <form id="post-form">
+                <input type="hidden" id="post-id">
                 <label for="post-title">Título:</label>
                 <input type="text" id="post-title" required>
 
                 <label for="post-image">Imagem:</label>
                 <input type="file" id="post-image" accept="image/*" required>
+                <p id="image-info" style="display:none;">Deixe em branco para manter a imagem atual.</p>
 
                 <label for="post-description">Descrição (max 300 caracteres):</label>
                 <textarea id="post-description" maxlength="300" required></textarea>
@@ -126,7 +150,7 @@
                 <label for="post-date">Data:</label>
                 <input type="date" id="post-date" required>
 
-                <button type="submit" class="flashcard-button">Postar</button>
+                <button type="submit" class="flashcard-button" id="submit-post-btn">Postar</button>
             </form>
         </div>
     </div>
