@@ -8,78 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <style>
-        .controls-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            padding: 20px;
-            width: 100%;
-            max-width: 900px;
-        }
-        .search-container {
-            flex: 1 1 250px;
-            display: flex;
-            gap: 10px;
-        }
-        .search-container input {
-            flex-grow: 1;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-        .sort-container, .pagination-container {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .pagination-container button {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .pagination-container button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        .post-tags {
-            margin-top: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-        .post-tags span {
-            background-color: var(--secondary-color);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            cursor: pointer;
-        }
-        /* Estilos do seletor de cores */
-        .color-selector {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-        }
-        .color-swatch {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: border-color 0.3s ease;
-        }
-        .color-swatch.selected {
-            border-color: var(--primary-color);
-        }
-    </style>
 </head>
 <body>
 
@@ -132,10 +60,10 @@
                 
                 <div class="color-selector">
                     <div class="color-swatch selected" data-color="rgba(255, 255, 255, 0.8)" style="background-color: rgba(255, 255, 255, 0.8);"></div>
-                    <div class="color-swatch" data-color="#2c3e50" style="background-color: #2c3e50;"></div>
-                    <div class="color-swatch" data-color="#f0f0f0" style="background-color: #f0f0f0;"></div>
-                    <div class="color-swatch" data-color="#27ae60" style="background-color: #27ae60;"></div>
-                    <div class="color-swatch" data-color="#f1c40f" style="background-color: #f1c40f;"></div>
+                    <div class="color-swatch" data-color="#EE82EE" style="background-color: #EE82EE;"></div>
+                    <div class="color-swatch" data-color="rgb(152, 251, 152)" style="background-color: rgb(152, 251, 152);"></div>
+                    <div class="color-swatch" data-color="rgb(127, 255, 212)" style="background-color: rgb(127, 255, 212);"></div>
+                    <div class="color-swatch" data-color="rgb(255, 222, 173)" style="background-color: rgb(255, 222, 173);"></div>
                 </div>
 
                 <label for="post-image">Imagem:</label>
