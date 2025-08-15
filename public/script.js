@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingStatus = document.getElementById('loading-status');
 
     // Seletor de cores
-    const colorSwatches = document.querySelectorAll('.color-swatch');
+    const colorSwatches = document.querySelectorAll('.color-selector .color-swatch');
 
     // Funções de manipulação dos modais
     if (openModalBtn) {
@@ -230,7 +230,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('post-image').required = false;
         document.getElementById('image-info').style.display = 'block';
 
-        // Seleciona a cor correta no seletor
         colorSwatches.forEach(swatch => {
             swatch.classList.remove('selected');
             if (swatch.dataset.color === post.color) {
@@ -340,6 +339,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (title.length > LIMIT_TITLE) {
                 alert(`O título deve ter no máximo ${LIMIT_TITLE} caracteres.`);
+                return;
+            }
+            if (description.length > LIMIT_DESCRIPTION) {
+                alert(`A descrição deve ter no máximo ${LIMIT_DESCRIPTION} caracteres.`);
                 return;
             }
 
