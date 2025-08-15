@@ -7,8 +7,11 @@ const pool = new Pool({
 const getDynamicPassword = () => {
     const date = new Date();
     const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `mural${hours}${minutes}`;
+    const currentMinute = date.getMinutes();
+    const minutes = currentMinute.toString().padStart(2, '0');
+    const nextMinute = (currentMinute + 1).toString().padStart(2, '0');
+    return `mural${hours}${minutes}${nextMinute}`;
+};
 };
 
 export default async function handler(request, response) {
