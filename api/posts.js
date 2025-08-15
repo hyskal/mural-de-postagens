@@ -7,42 +7,38 @@ const pool = new Pool({
 export default async function handler(request, response) {
     try {
         const client = await pool.connect();
-
+        
         if (request.method === 'GET') {
             const { searchTerm = '', sortBy = 'post_date', sortOrder = 'desc', limit = 20, page = 1 } = request.query;
 
             const offset = (parseInt(page) - 1) * parseInt(limit);
             
-            // Construção da consulta SQL com filtros e paginação
             let whereClause = '';
             const queryParams = [];
             
             if (searchTerm) {
-                // Lógica de pesquisa por tags (ex: tag:coleta)
                 if (searchTerm.startsWith('tag:')) {
                     const tag = searchTerm.substring(4);
                     whereClause = 'WHERE tags ILIKE $1';
                     queryParams.push(`%${tag}%`);
                 } else {
-                    // Pesquisa por título, autor e descrição
                     whereClause = 'WHERE title ILIKE $1 OR author ILIKE $1 OR description ILIKE $1';
                     queryParams.push(`%${searchTerm}%`);
                 }
             }
             
-            // Consulta para o total de postagens (para a paginação)
             const totalQuery = `SELECT COUNT(*) FROM memorial_schema.memorial ${whereClause}`;
             const totalResult = await client.query(totalQuery, queryParams);
             const totalPosts = parseInt(totalResult.rows[0].count);
 
-            const allowedSortBy = ['post_date', 'title', 'author'];
+            const allowedSortBy = ['post_date', 'title', 'author', 'created_at'];
             const allowedSortOrder = ['asc', 'desc'];
             
             const sanitizedSortBy = allowedSortBy.includes(sortBy) ? sortBy : 'post_date';
             const sanitizedSortOrder = allowedSortOrder.includes(sortOrder) ? sortOrder : 'desc';
 
             const dataQuery = `
-                SELECT * FROM memorial_schema.memorial
+                SELECT id, title, description, author, post_date, image_url, tags, created_at FROM memorial_schema.memorial
                 ${whereClause}
                 ORDER BY ${sanitizedSortBy} ${sanitizedSortOrder}
                 LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
@@ -58,16 +54,55 @@ export default async function handler(request, response) {
             const query = `
                 INSERT INTO memorial_schema.memorial (title, image_url, description, author, post_date, tags)
                 VALUES ($1, $2, $3, $4, $5, $6)
+                RETURNING id, created_at
             `;
-            await client.query(query, [title, image_url, description, author, post_date, tags]);
-            response.status(201).json({ message: 'Postagem criada com sucesso!' });
-        } else if (request.method === 'DELETE') {
-            const postId = request.query.id;
-            if (!postId) {
-                return response.status(400).json({ message: 'ID da postagem não fornecido.' });
+            const result = await client.query(query, [title, image_url, description, author, post_date, tags]);
+            response.status(201).json(result.rows[0]);
+
+        } else if (request.method === 'PUT') {
+            const { id } = request.query;
+            const { title, image_url, description, author, post_date, tags } = request.body;
+
+            const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
+            if (postCheck.rowCount === 0) {
+                return response.status(404).json({ message: 'Postagem não encontrada.' });
             }
+
+            const createdTime = new Date(postCheck.rows[0].created_at);
+            const fiveMinutesAgo = new Date(new Date() - (5 * 60 * 1000));
+            if (createdTime < fiveMinutesAgo) {
+                return response.status(403).json({ message: 'Não é possível editar esta postagem. O limite de 5 minutos foi excedido.' });
+            }
+
+            const query = `
+                UPDATE memorial_schema.memorial SET
+                title = $1,
+                image_url = $2,
+                description = $3,
+                author = $4,
+                post_date = $5,
+                tags = $6
+                WHERE id = $7
+            `;
+            const queryParams = [title, image_url, description, author, post_date, tags, id];
+            await client.query(query, queryParams);
+            response.status(200).json({ message: 'Postagem atualizada com sucesso!' });
+
+        } else if (request.method === 'DELETE') {
+            const { id } = request.query;
+            const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
+            if (postCheck.rowCount === 0) {
+                return response.status(404).json({ message: 'Postagem não encontrada.' });
+            }
+
+            const createdTime = new Date(postCheck.rows[0].created_at);
+            const fiveMinutesAgo = new Date(new Date() - (5 * 60 * 1000));
+            if (createdTime < fiveMinutesAgo) {
+                return response.status(403).json({ message: 'Não é possível excluir esta postagem. O limite de 5 minutos foi excedido.' });
+            }
+            
             const query = 'DELETE FROM memorial_schema.memorial WHERE id = $1';
-            const result = await client.query(query, [postId]);
+            const result = await client.query(query, [id]);
 
             if (result.rowCount === 0) {
                 return response.status(404).json({ message: 'Postagem não encontrada.' });
