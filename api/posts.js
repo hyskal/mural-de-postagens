@@ -6,9 +6,9 @@ const pool = new Pool({
 
 const getDynamicPassword = () => {
     const date = new Date();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
-    return `mural${month}${day}`;
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    return `mural${day}${month}`;
 };
 
 export default async function handler(request, response) {
