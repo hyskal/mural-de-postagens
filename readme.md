@@ -67,3 +67,28 @@ Criar pastas e arquivos: mkdir api public e touch api/posts.js public/index.html
 Mover arquivos: mv index.html public/ e mv script.js public/
 
 Enviar para o GitHub: git add ., git commit -m "Mensagem do commit" e git push origin main
+
+Integração com a API ImgBB
+O projeto utiliza a API ImgBB para o armazenamento de imagens. A chave de API é usada no script.js para realizar o upload. O back-end e o banco de dados armazenam apenas a URL da imagem.
+
+Configuração do Vercel
+Variável de Ambiente: No painel do Vercel, a variável NEON_CONNECTION_STRING deve ser configurada com a string de conexão direta do Neon.
+
+Exemplo de Configuração:
+
+Nome da Variável	Valor (Exemplo)
+NEON_CONNECTION_STRING	postgresql://[usuario]:[senha]@[host]:[porta]/[banco_de_dados]?sslmode=require
+
+Exportar para as Planilhas
+Comandos do Terminal
+Os seguintes comandos foram utilizados para preparar a estrutura do projeto e enviá-lo para o GitHub, o que acionou o deploy automático no Vercel.
+
+Clonar o repositório: git clone [URL_DO_SEU_REPOSITORIO]
+
+Acessar a pasta: cd mural-de-postagens
+
+Criar pastas e arquivos: mkdir api public e touch api/posts.js public/index.html public/script.js public/style.css package.json
+
+Mover arquivos: mv index.html public/ e mv script.js public/
+
+Enviar para o GitHub: git add ., git commit -m "Mensagem do commit" e git push origin main
