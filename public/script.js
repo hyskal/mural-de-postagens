@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_URL = 'https://mural-de-postagens.vercel.app';
     const IMG_BB_API_KEY = '416fe9a25d249378346cacff72f7ef2d';
     const EDIT_TIME_LIMIT_MINUTES = 5;
-    const LIMIT_DESCRIPTION = 300;
+    const LIMIT_DESCRIPTION = 100; // Alterado para 100 caracteres
     const LIMIT_TITLE = 120;
 
     // Estado da paginação
