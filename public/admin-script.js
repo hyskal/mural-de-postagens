@@ -26,7 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const editDescription = document.getElementById('edit-description');
     const editAuthor = document.getElementById('edit-author');
     const editTags = document.getElementById('edit-tags');
+    const editCreatedAt = document.getElementById('edit-created-at');
     const editPhotoDate = document.getElementById('edit-photo-date');
+    
+    // Função para formatar a data para o formato dd-mm-aaaa
+    const formatarDataExibicao = (data) => {
+        if (!data) return 'N/A';
+        const partes = data.split('T')[0].split('-');
+        return `${partes[2]}-${partes[1]}-${partes[0]}`;
+    };
 
     // Validação de senha
     loginBtn.addEventListener('click', () => {
@@ -72,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${post.id.substring(0, 8)}...</td>
                     <td>${post.title}</td>
                     <td>${post.author}</td>
-                    <td>${post.created_at ? post.created_at.split('T')[0] : ''}</td>
+                    <td>${post.created_at ? formatarDataExibicao(post.created_at) : 'N/A'}</td>
                     <td>${post.photo_date ? post.photo_date.split('T')[0] : ''}</td>
                     <td>
                         <button class="edit-btn" data-id="${post.id}">Editar</button>
@@ -112,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editDescription.value = post.description;
         editAuthor.value = post.author;
         editTags.value = post.tags;
+        editCreatedAt.value = post.created_at ? formatarDataExibicao(post.created_at) : 'N/A';
         // Adiciona um tratamento para valores nulos antes de chamar split()
         editPhotoDate.value = post.photo_date ? post.photo_date.split('T')[0] : '';
         editPostModal.style.display = 'block';
