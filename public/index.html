@@ -62,28 +62,6 @@
             font-size: 0.8em;
             cursor: pointer;
         }
-        .edit-delete-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .edit-btn, .delete-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s ease;
-        }
-        .delete-btn {
-            background-color: #e74c3c;
-        }
-        .delete-btn:hover {
-            background-color: #c0392b;
-        }
     </style>
 </head>
 <body>
@@ -104,7 +82,8 @@
             <div class="sort-container">
                 <label for="sort-by">Ordenar por:</label>
                 <select id="sort-by">
-                    <option value="post_date">Data</option>
+                    <option value="post_date">Data da Postagem</option>
+                    <option value="photo_date">Data da Foto</option>
                     <option value="title">Título</option>
                     <option value="author">Autor</option>
                 </select>
@@ -131,8 +110,8 @@
             <h2 id="modal-title">Nova Postagem</h2>
             <form id="post-form">
                 <input type="hidden" id="post-id">
-                <label for="post-title">Título:</label>
-                <input type="text" id="post-title" required>
+                <label for="post-title">Título (max 120 caracteres):</label>
+                <input type="text" id="post-title" maxlength="120" required>
 
                 <label for="post-image">Imagem:</label>
                 <input type="file" id="post-image" accept="image/*" required>
@@ -147,8 +126,11 @@
                 <label for="post-tags">Tags (separadas por vírgula):</label>
                 <input type="text" id="post-tags" placeholder="Ex: coleta, análise, segurança">
 
-                <label for="post-date">Data:</label>
+                <label for="post-date">Data da Postagem:</label>
                 <input type="date" id="post-date" required>
+                
+                <label for="photo-date">Data da Foto:</label>
+                <input type="date" id="photo-date" required>
 
                 <button type="submit" class="flashcard-button" id="submit-post-btn">Postar</button>
             </form>
