@@ -5,11 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
 const getDynamicPassword = () => {
     const date = new Date();
     const hours = date.getHours().toString().padStart(2, '0');
-    // Faz a senha ser válida para o minuto atual e o próximo.
-    const currentMinute = date.getMinutes();
-    const minutes = currentMinute.toString().padStart(2, '0');
-    const nextMinute = (currentMinute + 1).toString().padStart(2, '0');
-    return `mural${hours}${minutes}${nextMinute}`;
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `mural${hours}${minutes}`;
 };
 
     // Seletores de elementos
