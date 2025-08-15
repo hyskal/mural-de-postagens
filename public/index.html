@@ -55,21 +55,17 @@
             <h2 id="modal-title">Nova Postagem</h2>
             <form id="post-form">
                 <input type="hidden" id="post-id">
-                
-                <div class="color-theme-container">
-                    <label>Tema:</label>
-                    <div class="color-selector">
-                        <div class="color-swatch selected" data-color="rgba(255, 255, 255, 0.8)" style="background-color: rgba(255, 255, 255, 0.8);"></div>
-                        <div class="color-swatch" data-color="#EE82EE" style="background-color: #EE82EE;"></div>
-                        <div class="color-swatch" data-color="rgb(152, 251, 152)" style="background-color: rgb(152, 251, 152);"></div>
-                        <div class="color-swatch" data-color="rgb(127, 255, 212)" style="background-color: rgb(127, 255, 212);"></div>
-                        <div class="color-swatch" data-color="rgb(255, 222, 173)" style="background-color: rgb(255, 222, 173);"></div>
-                    </div>
-                </div>
-
                 <label for="post-title">Título (max 120 caracteres):</label>
                 <input type="text" id="post-title" maxlength="120" required>
                 
+                <div class="color-selector">
+                    <div class="color-swatch selected" data-color="rgba(255, 255, 255, 0.8)" style="background-color: rgba(255, 255, 255, 0.8);"></div>
+                    <div class="color-swatch" data-color="#EE82EE" style="background-color: #EE82EE;"></div>
+                    <div class="color-swatch" data-color="rgb(152, 251, 152)" style="background-color: rgb(152, 251, 152);"></div>
+                    <div class="color-swatch" data-color="rgb(127, 255, 212)" style="background-color: rgb(127, 255, 212);"></div>
+                    <div class="color-swatch" data-color="rgb(255, 222, 173)" style="background-color: rgb(255, 222, 173);"></div>
+                </div>
+
                 <label for="post-image">Imagem:</label>
                 <input type="file" id="post-image" accept="image/*" required>
                 <p id="image-info" style="display:none;">Deixe em branco para manter a imagem atual.</p>
