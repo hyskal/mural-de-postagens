@@ -1,0 +1,12 @@
+{
+  "name": "mural-de-postagens-api",
+  "version": "1.0.0",
+  "description": "API para o mural de postagens",
+  "main": "api/posts.js",
+  "scripts": {
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  }
+}
