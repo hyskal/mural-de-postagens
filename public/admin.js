@@ -114,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
         editDescription.value = post.description;
         editAuthor.value = post.author;
         editTags.value = post.tags;
-        // Adiciona um tratamento para valores nulos antes de chamar split()
         editPhotoDate.value = post.photo_date ? post.photo_date.split('T')[0] : '';
         editPostModal.style.display = 'block';
     }
