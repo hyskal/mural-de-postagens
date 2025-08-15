@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Estado da paginação
     let currentPage = 1;
-    const postsPerPage = 20;
+    const postsPerPage = 10;
     let totalPosts = 0;
 
     // Seletores de elementos do DOM
