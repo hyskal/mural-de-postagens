@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const IMG_BB_API_KEY = '416fe9a25d249378346cacff72f7ef2d';
     const EDIT_TIME_LIMIT_MINUTES = 5;
     const LIMIT_DESCRIPTION = 150;
+    const LIMIT_TITLE = 120;
 
     // Estado da paginação
     let currentPage = 1;
@@ -139,6 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         ` : '';
 
+        // Formatação da data para remover T00:00:00.000Z
+        const formattedPostDate = post.post_date ? post.post_date.split('T')[0] : '';
+        const formattedPhotoDate = post.photo_date ? post.photo_date.split('T')[0] : '';
+
         postCard.innerHTML = `
             <h3 class="post-title">${post.title}</h3>
             <div class="post-image-container">
@@ -148,7 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ${tagsHtml}
             <div class="post-meta">
                 <span class="post-author">Autor: ${post.author}</span>
-                <span class="post-date">Data: ${post.post_date}</span>
+                <span class="post-date">Data da Foto: ${formattedPhotoDate}</span>
+                <span class="post-date">Data da Postagem: ${formattedPostDate}</span>
             </div>
             ${editDeleteButtons}
         `;
@@ -186,7 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('post-description').value = post.description;
         document.getElementById('post-author').value = post.author;
         document.getElementById('post-tags').value = post.tags;
-        document.getElementById('post-date').value = post.post_date;
+        document.getElementById('post-date').value = post.post_date.split('T')[0];
+        document.getElementById('photo-date').value = post.photo_date.split('T')[0];
         document.getElementById('post-image').required = false;
         document.getElementById('image-info').style.display = 'block';
         newPostModal.style.display = 'block';
@@ -271,17 +278,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = document.getElementById('post-title').value;
             const description = document.getElementById('post-description').value;
             const author = document.getElementById('post-author').value;
-            const date = document.getElementById('post-date').value;
+            const postDate = document.getElementById('post-date').value;
+            const photoDate = document.getElementById('photo-date').value;
             const tags = document.getElementById('post-tags').value;
             const imageFile = document.getElementById('post-image').files[0];
 
-            if (!title || !description || !author || !date) {
+            if (!title || !description || !author || !postDate || !photoDate) {
                 console.warn('Alguns campos do formulário estão vazios.');
                 alert('Por favor, preencha todos os campos obrigatórios.');
                 return;
             }
 
-            console.log('Dados do formulário:', { postId, title, description, author, date, tags, imageFile });
+            if (title.length > LIMIT_TITLE) {
+                alert(`O título deve ter no máximo ${LIMIT_TITLE} caracteres.`);
+                return;
+            }
+
+            console.log('Dados do formulário:', { postId, title, description, author, postDate, photoDate, tags, imageFile });
             
             let imageUrl = null;
             if (imageFile) {
@@ -296,7 +309,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 image_url: imageUrl,
                 description,
                 author,
-                post_date: date,
+                post_date: postDate,
+                photo_date: photoDate,
                 tags
             };
             
