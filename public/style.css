@@ -92,7 +92,7 @@ header h1 {
 }
 
 .post-image {
-    max-width: 290px;
+    max-width: 100%; /* Ajuste para que a imagem se ajuste à largura do card */
     height: auto;
     border-radius: 8px;
     cursor: pointer;
