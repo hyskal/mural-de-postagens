@@ -63,18 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    window.addEventListener('click', (event) => {
-        if (event.target === newPostModal) {
-            console.log('Clique fora do modal de postagem. Ocultando modal.');
-            newPostModal.style.display = 'none';
-            postForm.reset();
-        }
-        if (event.target === enlargedImageModal) {
-            console.log('Clique fora do modal de imagem ampliada. Ocultando modal.');
-            enlargedImageModal.style.display = 'none';
-        }
-    });
-
     function resetPostModal() {
         document.getElementById('modal-title').textContent = 'Nova Postagem';
         document.getElementById('submit-post-btn').textContent = 'Postar';
