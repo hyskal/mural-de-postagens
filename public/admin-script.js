@@ -2,9 +2,13 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script.');
 
     const API_URL = 'https://mural-de-postagens.vercel.app';
-    const IMG_BB_API_KEY = '416fe9a25d249378346cacff72f7ef2d';
+    const IMG_API_CONFIGS = [
+        { name: 'ImgBB', endpoint: 'https://api.imgbb.com/1/upload', key: '8c223ff9c3c267832c26aacb2101485a5' },
+        { name: 'Freeimage.host', endpoint: 'https://freeimage.host/api/1/upload', key: '6d207e02198a847aa98d0a2a901485a5' }
+    ];
     const EDIT_TIME_LIMIT_MINUTES = 5;
-    const LIMIT_DESCRIPTION = 300; 
+    const LIMIT_DESCRIPTION = 300;
+    const DISPLAY_LIMIT_DESCRIPTION = 100;
     const LIMIT_TITLE = 120;
 
     // Estado da paginação
@@ -102,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingStatus.textContent = status;
     }
 
-    // Função assíncrona para upload de imagem no ImgBB
+    // Função assíncrona para upload de imagem nas APIs
     async function uploadImage(imageFile) {
         if (!imageFile) {
             console.warn('Nenhum arquivo de imagem selecionado.');
@@ -113,27 +117,32 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('image', imageFile);
         console.log('FormData preparado para envio.');
 
-        try {
-            updateLoading(30, 'Fazendo upload da imagem...');
-            const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMG_BB_API_KEY}`, {
-                method: 'POST',
-                body: formData,
-            });
+        for (const config of IMG_API_CONFIGS) {
+            try {
+                updateLoading(30, `Fazendo upload da imagem usando ${config.name}...`);
+                const response = await fetch(`${config.endpoint}?key=${config.key}`, {
+                    method: 'POST',
+                    body: formData,
+                });
 
-            if (!response.ok) {
-                console.error('Falha na resposta do ImgBB. Status:', response.status, 'Status Text:', response.statusText);
-                throw new Error('Erro no upload da imagem para o ImgBB');
+                if (!response.ok) {
+                    console.warn(`Falha no upload com a API ${config.name}. Status: ${response.status}. Tentando a próxima.`);
+                    continue;
+                }
+                
+                const data = await response.json();
+                console.log('Upload bem-sucedido. URL da imagem:', data.image.url);
+                updateLoading(60, 'Imagem enviada. Publicando no mural...');
+                return data.image.url;
+            } catch (error) {
+                console.warn(`Erro de comunicação com a API ${config.name}. Tentando a próxima.`);
+                continue;
             }
-
-            const data = await response.json();
-            console.log('Upload bem-sucedido. URL da imagem:', data.data.url);
-            updateLoading(60, 'Imagem enviada. Publicando no mural...');
-            return data.data.url;
-        } catch (error) {
-            console.error('Erro durante o upload:', error);
-            alert('Erro ao enviar a imagem. Por favor, tente novamente.');
-            return null;
         }
+
+        console.error('Todas as chaves de API falharam no upload.');
+        alert('Erro ao enviar a imagem. Por favor, tente novamente.');
+        return null;
     }
     
     // Função para formatar a data para o formato dd-mm-aaaa
@@ -151,10 +160,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         postCard.style.backgroundColor = post.color || 'rgba(255, 255, 255, 0.8)';
 
-        // Lógica para limitar a descrição e adicionar "Leia Mais"
+        // Lógica para limitar a descrição para exibição (100 caracteres)
         let descriptionText = post.description;
-        if (descriptionText && descriptionText.length > LIMIT_DESCRIPTION) {
-            descriptionText = descriptionText.substring(0, LIMIT_DESCRIPTION) + '... <a href="#" class="read-more" data-fulltext="' + post.description.replace(/"/g, '&quot;') + '">Leia Mais</a>';
+        if (descriptionText && descriptionText.length > DISPLAY_LIMIT_DESCRIPTION) {
+            descriptionText = descriptionText.substring(0, DISPLAY_LIMIT_DESCRIPTION) + '... <a href="#" class="read-more" data-fulltext="' + post.description.replace(/"/g, '&quot;') + '">Leia Mais</a>';
         }
         
         // Exibição de tags
