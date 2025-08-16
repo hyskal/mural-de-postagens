@@ -115,7 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const formData = new FormData();
         formData.append('image', imageFile);
-        console.log('FormData preparado para envio.');
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos de timeout
 
         for (const config of IMG_API_CONFIGS) {
             try {
@@ -123,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch(`${config.endpoint}?key=${config.key}`, {
                     method: 'POST',
                     body: formData,
+                    signal: controller.signal
                 });
 
                 if (!response.ok) {
@@ -133,13 +136,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
                 console.log('Upload bem-sucedido. URL da imagem:', data.image.url);
                 updateLoading(60, 'Imagem enviada. Publicando no mural...');
+                clearTimeout(timeoutId); // Limpa o timeout em caso de sucesso
                 return data.image.url;
             } catch (error) {
-                console.warn(`Erro de comunicação com a API ${config.name}. Tentando a próxima.`);
+                if (error.name === 'AbortError') {
+                    console.warn(`A requisição para ${config.name} excedeu o tempo limite. Tentando a próxima.`);
+                } else {
+                    console.warn(`Erro de comunicação com a API ${config.name}. Tentando a próxima.`);
+                }
                 continue;
             }
         }
 
+        clearTimeout(timeoutId);
         console.error('Todas as chaves de API falharam no upload.');
         alert('Erro ao enviar a imagem. Por favor, tente novamente.');
         return null;
