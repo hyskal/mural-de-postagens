@@ -109,6 +109,40 @@
     <p id="loading-status" class="loading-status-text">Iniciando...</p>
 </div>
 
+            <div id="loading-modal" class="loading-container-minimal">
+    <!-- Ícone de upload -->
+    <div class="upload-icon" id="uploadIcon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17,8 12,3 7,8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+    </div>
+
+    <!-- Círculo de progresso -->
+    <div class="progress-circle">
+        <svg>
+            <circle class="track" cx="60" cy="60" r="54"/>
+            <circle class="progress" cx="60" cy="60" r="54" id="progressCircle"/>
+        </svg>
+        <div class="progress-text" id="progressText">0%</div>
+    </div>
+
+    <!-- Textos de status -->
+    <div class="status-text" id="statusText">Preparando envio...</div>
+    <div class="substatus-text" id="substatusText">Iniciando processo</div>
+
+    <!-- Indicadores de etapa -->
+    <div class="step-indicators">
+        <div class="step active" id="step1"></div>
+        <div class="step" id="step2"></div>
+        <div class="step" id="step3"></div>
+    </div>
+
+    <!-- Ícone de sucesso -->
+    <div class="success-check" id="successCheck"></div>
+</div>
+
     <div id="enlarged-image-modal" class="modal">
         <div class="modal-content-image">
             <span id="close-enlarged-image-modal" class="close-btn">&times;</span>
