@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
- * Versão 1.4: Melhorados os logs de debug para autenticação administrativa e adicionada verificação mais robusta da senha de administrador nas operações PUT e DELETE.
  * Versão 1.3: Adicionada a função getSecurePassword() para ofuscar a senha do administrador, substituindo o método de senha dinâmica para maior segurança.
  * Versão 1.2: Melhoria no tratamento de parâmetros de busca e ordenação para evitar SQL injection, usando prepared statements.
  * Versão 1.1: Otimização das consultas ao banco de dados para incluir contagem total de posts e melhorar o desempenho da paginação.
+ * Versão 1.0: Versão inicial da API com endpoints para GET, POST, PUT e DELETE de postagens.
  */
 const { Pool } = require('pg');
 
@@ -18,16 +18,14 @@ const pool = new Pool({
     connectionString: process.env.NEON_CONNECTION_STRING,
 });
 
-const obfuscated = 'JCFzYCFsYSFzYCFsJCFvYCFqYCFrJCE=';
-
-function getSecurePassword() {
+const obfuscated = 'JFkpJF0lJF0pJFkpJFopJFkpJF4lJFopJF8lJFslJE0=';function getSecurePassword() {
     const decoded = atob(obfuscated);
     let result = '';
     for (let i = 0; i < decoded.length; i++) {
         result += String.fromCharCode(decoded.charCodeAt(i) ^ 77);
     }
     return result;
-}
+};
 
 export default async function handler(request, response) {
     try {
@@ -88,15 +86,8 @@ export default async function handler(request, response) {
             const { id } = request.query;
             const { title, image_url, description, author, photo_date, tags, color } = request.body;
             const adminPassword = request.query.admin_password;
-            const correctAdminPassword = getSecurePassword();
 
-            console.log('🔐 PUT - Senha recebida:', adminPassword ? '[PRESENTE]' : '[AUSENTE]');
-            console.log('🔐 PUT - Senha esperada:', correctAdminPassword ? '[DEFINIDA]' : '[NÃO DEFINIDA]');
-            console.log('🔐 PUT - Senhas conferem:', adminPassword === correctAdminPassword);
-
-            if (adminPassword !== correctAdminPassword) {
-                console.log('⚠️ PUT - Senha não confere, verificando limite de 5 minutos...');
-                
+            if (adminPassword !== getSecurePassword()) {
                 const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
                 if (postCheck.rowCount === 0) {
                     return response.status(404).json({ message: 'Postagem não encontrada.' });
@@ -105,12 +96,8 @@ export default async function handler(request, response) {
                 const createdTime = new Date(postCheck.rows[0].created_at);
                 const fiveMinutesAgo = new Date(new Date() - (5 * 60 * 1000));
                 if (createdTime < fiveMinutesAgo) {
-                    console.log('❌ PUT - Limite de 5 minutos excedido');
                     return response.status(403).json({ message: 'Não é possível editar esta postagem. O limite de 5 minutos foi excedido.' });
                 }
-                console.log('✅ PUT - Dentro do limite de 5 minutos');
-            } else {
-                console.log('✅ PUT - Senha de administrador válida, bypass do limite de tempo');
             }
             
             const query = `
@@ -126,21 +113,13 @@ export default async function handler(request, response) {
             `;
             const queryParams = [title, image_url, description, author, photo_date, tags, color, id];
             await client.query(query, queryParams);
-            console.log('✅ PUT - Postagem atualizada com sucesso');
             response.status(200).json({ message: 'Postagem atualizada com sucesso!' });
 
         } else if (request.method === 'DELETE') {
             const { id } = request.query;
             const adminPassword = request.query.admin_password;
-            const correctAdminPassword = getSecurePassword();
             
-            console.log('🔐 DELETE - Senha recebida:', adminPassword ? '[PRESENTE]' : '[AUSENTE]');
-            console.log('🔐 DELETE - Senha esperada:', correctAdminPassword ? '[DEFINIDA]' : '[NÃO DEFINIDA]');
-            console.log('🔐 DELETE - Senhas conferem:', adminPassword === correctAdminPassword);
-
-            if (adminPassword !== correctAdminPassword) {
-                console.log('⚠️ DELETE - Senha não confere, verificando limite de 5 minutos...');
-                
+            if (adminPassword !== getSecurePassword()) {
                 const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
                 if (postCheck.rowCount === 0) {
                     return response.status(404).json({ message: 'Postagem não encontrada.' });
@@ -149,12 +128,8 @@ export default async function handler(request, response) {
                 const createdTime = new Date(postCheck.rows[0].created_at);
                 const fiveMinutesAgo = new Date(new Date() - (5 * 60 * 1000));
                 if (createdTime < fiveMinutesAgo) {
-                    console.log('❌ DELETE - Limite de 5 minutos excedido');
                     return response.status(403).json({ message: 'Não é possível excluir esta postagem. O limite de 5 minutos foi excedido.' });
                 }
-                console.log('✅ DELETE - Dentro do limite de 5 minutos');
-            } else {
-                console.log('✅ DELETE - Senha de administrador válida, bypass do limite de tempo');
             }
 
             const query = 'DELETE FROM memorial_schema.memorial WHERE id = $1';
@@ -164,7 +139,6 @@ export default async function handler(request, response) {
                 return response.status(404).json({ message: 'Postagem não encontrada.' });
             }
 
-            console.log('✅ DELETE - Postagem excluída com sucesso');
             response.status(200).json({ message: 'Postagem excluída com sucesso!' });
         } else {
             response.status(405).json({ message: 'Método não permitido' });
@@ -172,7 +146,7 @@ export default async function handler(request, response) {
         
         client.release();
     } catch (error) {
-        console.error('❌ Erro na API:', error);
+        console.error('Erro na API:', error);
         response.status(500).json({ message: 'Erro interno do servidor' });
     }
 }
