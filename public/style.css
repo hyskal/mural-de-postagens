@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 1.4: Implementado o novo layout para a seção de controles no mural, com um design moderno e responsivo, e garantida a compatibilidade com os estilos existentes do projeto.
  * Versão 1.3: Adicionada a propriedade `word-break: break-all;` na classe `.post-description` para garantir quebras de linha corretas para textos longos sem espaços, melhorando o layout.
  * Versão 1.2: Adicionados estilos para o seletor de cores no formulário, permitindo temas de cor personalizados para as postagens.
  * Versão 1.1: Implementados os efeitos de 'glassmorphism' com `backdrop-filter` e sombras para criar um visual moderno e transparente.
- * Versão 1.0: Versão inicial com os estilos base para a estrutura do mural, cards de postagem e modais.
  */
 :root {
     --primary-color: #2c3e50;
@@ -106,7 +106,7 @@ header h1 {
 }
 
 .post-image {
-    max-width: 100%; /* Ajuste para que a imagem se ajuste à largura do card */
+    max-width: 100%;
     height: auto;
     border-radius: 8px;
     cursor: pointer;
@@ -121,8 +121,8 @@ header h1 {
     font-size: 1em;
     color: var(--text-color);
     margin: 10px 0;
-    overflow-wrap: break-word; /* Já existente */
-    word-break: break-all; /* Adicione esta linha para garantir a quebra */
+    overflow-wrap: break-word;
+    word-break: break-all;
 }
 
 .post-meta {
@@ -255,7 +255,7 @@ header h1 {
     font-family: 'Poppins', sans-serif;
     font-size: 16px;
     font-weight: 600;
-    padding: 10px 24px; /* Altura reduzida para uma aparência mais minimalista */
+    padding: 10px 24px;
     background: var(--primary-color);
     color: white;
     border: none;
@@ -292,152 +292,197 @@ footer p {
     font-size: 14px;
     font-weight: 400;
 }
+
 .controls-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
-    padding: 20px;
-    width: 100%;
-    max-width: 900px;
-}
-.search-container {
-    flex: 1 1 250px;
-    display: flex;
-    gap: 10px;
-}
-.search-container input {
-    flex-grow: 1;
-    padding: 6px; /* Alinhado com a altura dos botões */
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-}
-.sort-container, .pagination-container {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-.pagination-container {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    justify-content: center;
-    margin: 20px auto;
-}
-.pagination-container button {
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-.pagination-container button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-.post-tags {
-    margin-top: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-}
-.post-tags span {
-    background-color: var(--secondary-color);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8em;
-    cursor: pointer;
-}
-/* Estilos do seletor de cores */
-.color-theme-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-    color: var(--text-color);
-}
-.color-theme-container label {
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 0;
-}
-.color-selector {
-    display: flex;
-    justify-content: flex-start;
-    gap: 8px;
-    margin-top: 0;
-}
-.color-swatch {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: border-color 0.3s ease;
-}
-.color-swatch.selected {
-    border-color: var(--primary-color);
-}
-.edit-delete-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 15px;
-}
-.edit-btn, .delete-btn {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.3s ease;
-}
-.delete-btn {
-    background-color: #e74c3c;
-}
-.delete-btn:hover {
-    background-color: #c0392b;
-}
-.loading-container {
-    padding: 20px;
-    text-align: center;
-}
-.loading-container.hidden {
-    display: none;
-}
-.loading-bar {
-    width: 100%;
-    height: 15px;
-    background-color: #f0f0f0;
-    border-radius: 8px;
-    overflow: hidden;
-}
-.loading-bar-fill {
-    height: 100%;
-    background-color: #27ae60;
-    transition: width 0.4s ease;
-}
-#loading-percent {
-    margin-top: 10px;
-    font-size: 1em;
-    font-weight: 600;
-}
-.loading-status-text {
-    font-size: 0.8em;
-    color: #777;
-    margin-top: 5px;
-    min-height: 20px;
+    padding: 24px;
+    margin-bottom: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-@media (max-width: 500px) {
-    .modal-content {
-        max-width: 95%;
-        padding: 15px;
+.header-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+@media (min-width: 1024px) {
+    .header-controls {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.nova-postagem-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(to right, #6366f1, #a855f7);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+}
+
+.nova-postagem-btn:hover {
+    background: linear-gradient(to right, #4f46e5, #9333ea);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+}
+
+.nova-postagem-btn:focus {
+    outline: none;
+    ring: 2px solid #6366f1;
+    ring-offset: 2px;
+}
+
+.nova-postagem-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.search-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .search-controls {
+        flex-direction: row;
+    }
+}
+
+@media (min-width: 1024px) {
+    .search-controls {
+        flex: 1;
+        margin-left: 24px;
+    }
+}
+
+.search-input-container {
+    position: relative;
+    flex: 1;
+}
+
+.search-input {
+    width: 100%;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 12px 12px 12px 40px;
+    color: white;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.search-input:focus {
+    outline: none;
+    ring: 2px solid #6366f1;
+    border-color: transparent;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.6);
+    width: 16px;
+    height: 16px;
+}
+
+.select-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.select-trigger {
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 0 16px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 160px;
+}
+
+.select-trigger:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.select-trigger:focus {
+    outline: none;
+    ring: 2px solid #6366f1;
+    border-color: transparent;
+}
+
+.select-trigger.sort-select {
+    min-width: 140px;
+}
+
+/* New select elements styling */
+select.select-trigger {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    color: #fff;
+}
+
+select.select-trigger option {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.chevron-down {
+    width: 16px;
+    height: 16px;
+    opacity: 0.5;
+    transition: transform 0.3s ease;
+}
+
+.select-trigger:hover .chevron-down {
+    transform: rotate(180deg);
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    .search-controls {
+        width: 100%;
+    }
+    
+    .select-trigger {
+        min-width: auto;
+        flex: 1;
+    }
+}
+
+@media (max-width: 1023px) {
+    .nova-postagem-btn {
+        width: 100%;
     }
 }
