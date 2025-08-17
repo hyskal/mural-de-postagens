@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 1.9: Corrigida a inconsistência de autenticação entre login e operações de editar/excluir. A senha decodificada agora é armazenada após o login bem-sucedido e reutilizada em todas as operações administrativas, garantindo que o administrador tenha acesso total sem limite de tempo.
  * Versão 1.8: Implementada a ofuscação simples Base64 para as chaves das APIs de upload de imagem, resolvendo os erros de requisição 400. Corrigido o erro de permissão. A senha do administrador agora é armazenada e reutilizada em todas as requisições (edição, exclusão), garantindo que a regra de 5 minutos não seja aplicada.
  * Versão 1.7: Corrigido o erro de permissão. A senha do administrador agora é armazenada e reutilizada em todas as requisições (edição, exclusão), garantindo que a regra de 5 minutos não seja aplicada.
  * Versão 1.6: Corrigido o erro de login. A validação de senha agora é realizada pela API de backend, o que é mais seguro e garante o acesso correto ao painel de administração.
- * Versão 1.5: Corrigido o erro de permissão. O script agora utiliza a senha ofuscada para autenticar corretamente as ações do administrador, permitindo editar e excluir postagens a qualquer momento, sem o limite de 5 minutos.
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script do painel de administração.');
@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const obfuscatedKey2 = 'ZWNjMjlhYjNhNDZmOGZhODc2MWViZGVlOGExZTg1MGQ=';
     const obfuscatedAdminPassword = 'JFkpJF0lJF0pJFkpJFopJFkpJF4lJFopJF8lJFslJE0=';
 
-    let adminPassword = null;
+    // Variável para armazenar a senha decodificada após login bem-sucedido
+    let validatedAdminPassword = null;
 
     function getSecureValue(obfuscated) {
         return atob(obfuscated);
@@ -56,28 +57,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Função de login
     loginBtn.addEventListener('click', async () => {
-        const password = passwordInput.value;
+        const inputPassword = passwordInput.value;
         const decodedPassword = getAdminPassword();
 
+        console.log('🔐 Tentando fazer login...');
+        console.log('🔐 Senha inserida pelo usuário:', inputPassword);
+        console.log('🔐 Senha decodificada esperada:', decodedPassword);
+
         try {
-            const response = await fetch(`${API_URL}/api/posts?admin_password=${decodedPassword}`);
+            // Testa se a senha inserida é igual à senha decodificada
+            if (inputPassword !== decodedPassword) {
+                console.error('❌ Senha inserida não confere com a senha decodificada');
+                alert('Senha incorreta!');
+                return;
+            }
+
+            // Testa a autenticação com o backend
+            const response = await fetch(`${API_URL}/api/posts?admin_password=${encodeURIComponent(decodedPassword)}`);
+            console.log('🔐 Resposta do servidor de autenticação:', response.status);
+            
             if (response.ok) {
-                console.log('Login bem-sucedido!');
-                adminPassword = password;
+                console.log('✅ Login bem-sucedido!');
+                // Armazena a senha decodificada validada para uso posterior
+                validatedAdminPassword = decodedPassword;
                 loginModal.style.display = 'none';
                 adminPage.style.display = 'block';
                 fetchPosts();
             } else {
-                alert('Senha incorreta!');
+                console.error('❌ Falha na autenticação com o servidor');
+                alert('Erro de autenticação com o servidor!');
             }
         } catch (error) {
-            console.error('Erro ao verificar senha:', error);
+            console.error('❌ Erro ao verificar senha:', error);
             alert('Erro ao tentar fazer login. Tente novamente.');
         }
     });
 
     // Função de logout
     logoutBtn.addEventListener('click', () => {
+        validatedAdminPassword = null; // Limpa a senha armazenada
         location.reload();
     });
 
@@ -106,6 +124,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function submitEditForm(event) {
         event.preventDefault();
+        
+        if (!validatedAdminPassword) {
+            console.error('❌ Senha de administrador não está disponível');
+            alert('Erro: Sessão administrativa inválida. Faça login novamente.');
+            return;
+        }
+
         const postId = document.getElementById('edit-post-id').value;
         const title = document.getElementById('edit-title').value;
         const imageUrl = document.getElementById('edit-image-url').value;
@@ -124,8 +149,11 @@ document.addEventListener('DOMContentLoaded', () => {
             color: ''
         };
 
+        console.log('📝 Tentando editar postagem:', postId);
+        console.log('🔐 Usando senha validada do administrador');
+
         try {
-            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${getAdminPassword()}`, {
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${encodeURIComponent(validatedAdminPassword)}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -133,16 +161,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(postData)
             });
 
+            console.log('📝 Resposta da edição:', response.status);
+
             if (!response.ok) {
                 const errorData = await response.json();
+                console.error('❌ Erro na resposta:', errorData);
                 throw new Error(errorData.message || 'Erro ao atualizar a postagem.');
             }
 
+            console.log('✅ Postagem editada com sucesso');
             alert('Postagem atualizada com sucesso!');
             editPostModal.style.display = 'none';
             fetchPosts();
         } catch (error) {
-            console.error('Erro ao atualizar postagem:', error);
+            console.error('❌ Erro ao atualizar postagem:', error);
             alert(error.message);
         }
     }
@@ -152,24 +184,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function deletePost(postId) {
+        if (!validatedAdminPassword) {
+            console.error('❌ Senha de administrador não está disponível');
+            alert('Erro: Sessão administrativa inválida. Faça login novamente.');
+            return;
+        }
+
         if (!confirm(`Tem certeza que deseja excluir a postagem ${postId}?`)) {
             return;
         }
 
+        console.log('🗑️ Tentando excluir postagem:', postId);
+        console.log('🔐 Usando senha validada do administrador');
+
         try {
-            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${getAdminPassword()}`, {
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${encodeURIComponent(validatedAdminPassword)}`, {
                 method: 'DELETE'
             });
 
+            console.log('🗑️ Resposta da exclusão:', response.status);
+
             if (!response.ok) {
                 const errorData = await response.json();
+                console.error('❌ Erro na resposta:', errorData);
                 throw new Error(errorData.message || 'Erro ao excluir a postagem.');
             }
 
+            console.log('✅ Postagem excluída com sucesso');
             alert('Postagem excluída com sucesso!');
             fetchPosts();
         } catch (error) {
-            console.error('Erro ao excluir postagem:', error);
+            console.error('❌ Erro ao excluir postagem:', error);
             alert(error.message);
         }
     }
@@ -200,8 +245,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 row.querySelector('.edit-btn').addEventListener('click', () => openEditModal(post));
                 row.querySelector('.delete-btn').addEventListener('click', () => deletePost(post.id));
             });
+            console.log('📋 Postagens carregadas na tabela administrativa');
         } catch (error) {
-            console.error('Erro ao buscar postagens:', error);
+            console.error('❌ Erro ao buscar postagens:', error);
             alert('Erro ao buscar postagens. Verifique sua conexão ou a API.');
         }
     }
