@@ -624,3 +624,152 @@ footer p {
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
 }
+
+/* ===== LOADING MINIMALISTA ===== */
+.loading-container-minimal {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 48px 40px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: none;
+}
+
+.upload-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 24px auto;
+    opacity: 0.8;
+    color: var(--primary-color);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+}
+
+.progress-circle {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 32px auto;
+}
+
+.progress-circle svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.progress-circle .track {
+    fill: none;
+    stroke: #f1f3f4;
+    stroke-width: 8;
+}
+
+.progress-circle .progress {
+    fill: none;
+    stroke: var(--primary-color);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 339; /* 2 * π * r onde r = 54 */
+    stroke-dashoffset: 339;
+    transition: stroke-dashoffset 0.6s ease;
+}
+
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.status-text {
+    font-size: 16px;
+    color: var(--text-color);
+    font-weight: 600;
+    margin-bottom: 8px;
+    min-height: 24px;
+}
+
+.substatus-text {
+    font-size: 14px;
+    color: var(--secondary-color);
+    font-weight: 400;
+    opacity: 0.8;
+    min-height: 20px;
+}
+
+.step-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 32px;
+}
+
+.step {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.step.active {
+    background: var(--primary-color);
+    transform: scale(1.25);
+}
+
+.step.completed {
+    background: #48bb78;
+}
+
+.success-check {
+    display: none;
+    width: 48px;
+    height: 48px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: #48bb78;
+    position: relative;
+}
+
+.success-check::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.success-check.show {
+    display: block;
+    animation: successPop 0.6s ease;
+}
+
+@keyframes successPop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.loading-container-minimal.error-state .progress-circle .progress {
+    stroke: #f56565;
+}
+
+.loading-container-minimal.error-state .progress-text {
+    color: #f56565;
+}
+
+.loading-container-minimal.error-state .status-text {
+    color: #e53e3e;
+}
