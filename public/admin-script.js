@@ -57,8 +57,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Função de login
     loginBtn.addEventListener('click', async () => {
         const password = passwordInput.value;
+        const decodedPassword = getAdminPassword();
+
         try {
-            const response = await fetch(`${API_URL}/api/posts?admin_password=${password}`);
+            const response = await fetch(`${API_URL}/api/posts?admin_password=${decodedPassword}`);
             if (response.ok) {
                 console.log('Login bem-sucedido!');
                 adminPassword = password;
