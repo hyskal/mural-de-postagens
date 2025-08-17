@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 1.6: Refinados os estilos do container de controle com melhorias na responsividade, efeitos focus e compatibilidade cross-browser para selects personalizados.
  * Versão 1.5: Adicionados novos estilos para o container de controle e elementos de busca/ordenação, garantindo um design moderno e responsivo sem afetar o restante do layout.
  * Versão 1.4: Implementada a ofuscação simples Base64 para as chaves das APIs de upload de imagem, resolvendo os erros de requisição 400.
  * Versão 1.3: Adicionada a propriedade `word-break: break-all;` na classe `.post-description` para garantir quebras de linha corretas para textos longos sem espaços, melhorando o layout.
- * Versão 1.2: Adicionados estilos para o seletor de cores no formulário, permitindo temas de cor personalizados para as postagens.
  */
 :root {
     --primary-color: #2c3e50;
@@ -63,6 +63,206 @@ header h1 {
     max-width: 900px;
     width: 100%;
     margin: 20px auto;
+}
+
+/* ESTILOS APRIMORADOS PARA O CONTROLS-CONTAINER */
+.controls-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 20px auto 32px auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    width: 100%;
+}
+
+.header-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+@media (min-width: 1024px) {
+    .header-controls {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.nova-postagem-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(to right, #6366f1, #a855f7);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+    font-family: 'Poppins', sans-serif;
+}
+
+.nova-postagem-btn:hover {
+    background: linear-gradient(to right, #4f46e5, #9333ea);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+}
+
+.nova-postagem-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #6366f1, 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.nova-postagem-btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.search-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .search-controls {
+        flex-direction: row;
+    }
+}
+
+@media (min-width: 1024px) {
+    .search-controls {
+        flex: 1;
+        margin-left: 24px;
+    }
+}
+
+.search-input-container {
+    position: relative;
+    flex: 1;
+}
+
+.search-input {
+    width: 100%;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 12px 12px 12px 40px;
+    color: white;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.search-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #6366f1;
+    border-color: transparent;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.6);
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+}
+
+.select-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.select-trigger {
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 0 32px 0 16px;
+    color: white;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 160px;
+    box-sizing: border-box;
+    
+    /* Personalização do select */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    
+    /* Seta personalizada */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.8)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m6 9 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+}
+
+.select-trigger:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.select-trigger:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #6366f1;
+    border-color: transparent;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.select-trigger.sort-select {
+    min-width: 140px;
+}
+
+/* Estilos para as options dos selects */
+.select-trigger option {
+    background: var(--primary-color);
+    color: white;
+    padding: 8px;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Responsividade dos controles */
+@media (max-width: 767px) {
+    .search-controls {
+        width: 100%;
+    }
+    
+    .select-trigger {
+        min-width: auto;
+        flex: 1;
+    }
+    
+    .select-trigger.sort-select {
+        min-width: auto;
+    }
+}
+
+@media (max-width: 1023px) {
+    .nova-postagem-btn {
+        width: 100%;
+    }
 }
 
 /* Estilos do mural de postagens */
@@ -291,182 +491,4 @@ footer p {
     margin: 0;
     font-size: 14px;
     font-weight: 400;
-}
-
-/* NOVOS ESTILOS PARA O CONTROLS-CONTAINER */
-.controls-container {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 32px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.header-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-@media (min-width: 1024px) {
-    .header-controls {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-    }
-}
-
-.nova-postagem-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: linear-gradient(to right, #6366f1, #a855f7);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 12px 24px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    white-space: nowrap;
-}
-
-.nova-postagem-btn:hover {
-    background: linear-gradient(to right, #4f46e5, #9333ea);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-    transform: translateY(-1px);
-}
-
-.nova-postagem-btn:focus {
-    outline: none;
-    ring: 2px solid #6366f1;
-    ring-offset: 2px;
-}
-
-.nova-postagem-btn svg {
-    width: 20px;
-    height: 20px;
-}
-
-.search-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-@media (min-width: 768px) {
-    .search-controls {
-        flex-direction: row;
-    }
-}
-
-@media (min-width: 1024px) {
-    .search-controls {
-        flex: 1;
-        margin-left: 24px;
-    }
-}
-
-.search-input-container {
-    position: relative;
-    flex: 1;
-}
-
-.search-input {
-    width: 100%;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    padding: 12px 12px 12px 40px;
-    color: white;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.search-input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.search-input:focus {
-    outline: none;
-    ring: 2px solid #6366f1;
-    border-color: transparent;
-}
-
-.search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.6);
-    width: 16px;
-    height: 16px;
-}
-
-.select-controls {
-    display: flex;
-    gap: 8px;
-}
-
-.select-trigger {
-    height: 40px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    padding: 0 16px;
-    color: white;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-width: 160px;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 32px;
-}
-
-.select-trigger:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.select-trigger:focus {
-    outline: none;
-    ring: 2px solid #6366f1;
-    border-color: transparent;
-}
-
-.select-trigger.sort-select {
-    min-width: 140px;
-}
-
-.select-trigger option {
-    background: var(--primary-color);
-    color: white;
-}
-
-@media (max-width: 767px) {
-    .search-controls {
-        width: 100%;
-    }
-    
-    .select-trigger {
-        min-width: auto;
-        flex: 1;
-    }
-}
-
-@media (max-width: 1023px) {
-    .nova-postagem-btn {
-        width: 100%;
-    }
 }
