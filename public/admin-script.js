@@ -83,11 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const enteredPassword = input.value;
                 const correctPassword = getAdminPassword();
                 
+                console.log('🔍 Senha digitada:', enteredPassword);
+                console.log('🔍 Senha esperada:', correctPassword);
+                console.log('🔍 São iguais?', enteredPassword === correctPassword);
+                
                 if (enteredPassword === correctPassword) {
                     modal.style.display = 'none';
                     resolve(correctPassword);
                 } else {
-                    alert('Senha incorreta!');
+                    alert(`Senha incorreta! Esperada: "${correctPassword}" | Digitada: "${enteredPassword}"`);
                     input.value = '';
                     input.focus();
                 }
