@@ -1,16 +1,10 @@
 /**
  * CHANGELOG
  *
- * Instruções para Revisores:
- * Este bloco de comentários registra as modificações significativas do arquivo.
- * Cada nova modificação deve ser adicionada no topo da lista.
- * Use o formato "Versão [número]: [Descrição da modificação]".
- * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
- *
- * Versão 1.9: Refatoração do script de administração para usar a senha decodificada diretamente nas chamadas de API, removendo a necessidade de armazenar a senha em uma variável global após o login.
- * Versão 1.8: Implementada a ofuscação simples Base64 para as chaves das APIs de upload de imagem, resolvendo os erros de requisição 400. Corrigido o erro de permissão. A senha do administrador agora é armazenada e reutilizada em todas as requisições (edição, exclusão), garantindo que a regra de 5 minutos não seja aplicada.
- * Versão 1.7: Corrigido o erro de permissão. A senha do administrador agora é armazenada e reutilizada em todas as requisições (edição, exclusão), garantindo que a regra de 5 minutos não seja aplicada.
- * Versão 1.6: Corrigido o erro de login. A validação de senha agora é realizada pela API de backend, o que é mais seguro e garante o acesso correto ao painel de administração.
+ * Versão 2.0: Implementado modal de confirmação de senha admin para operações críticas (editar/excluir). Resolve o problema de autenticação permitindo que o admin confirme sua identidade antes de cada operação privilegiada.
+ * Versão 1.9: Refatoração do script de administração para usar a senha decodificada diretamente nas chamadas de API.
+ * Versão 1.8: Implementada a ofuscação simples Base64 para as chaves das APIs de upload de imagem.
+ * Versão 1.7: Corrigido o erro de permissão. A senha do administrador agora é armazenada e reutilizada.
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script do painel de administração.');
@@ -52,7 +46,92 @@ document.addEventListener('DOMContentLoaded', () => {
     const postsPerPage = 20;
     let currentPage = 1;
 
-    // Função de login
+    // ========== NOVO: MODAL DE CONFIRMAÇÃO DE SENHA ==========
+    function createPasswordConfirmModal() {
+        const modalHTML = `
+            <div id="password-confirm-modal" class="modal" style="display: none;">
+                <div class="login-content">
+                    <h3>Confirmar Operação Admin</h3>
+                    <p>Digite a senha de administrador para continuar:</p>
+                    <input type="password" id="confirm-password-input" placeholder="Senha Admin">
+                    <div style="margin-top: 15px;">
+                        <button id="confirm-password-btn" class="flashcard-button">Confirmar</button>
+                        <button id="cancel-password-btn" class="flashcard-button" style="background: #e74c3c; margin-left: 10px;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    function showPasswordConfirm() {
+        return new Promise((resolve, reject) => {
+            const modal = document.getElementById('password-confirm-modal');
+            const input = document.getElementById('confirm-password-input');
+            const confirmBtn = document.getElementById('confirm-password-btn');
+            const cancelBtn = document.getElementById('cancel-password-btn');
+
+            // Limpar input
+            input.value = '';
+            
+            // Mostrar modal
+            modal.style.display = 'flex';
+            input.focus();
+
+            // Handler para confirmar
+            const handleConfirm = () => {
+                const enteredPassword = input.value;
+                const correctPassword = getAdminPassword();
+                
+                if (enteredPassword === correctPassword) {
+                    modal.style.display = 'none';
+                    resolve(correctPassword);
+                } else {
+                    alert('Senha incorreta!');
+                    input.value = '';
+                    input.focus();
+                }
+            };
+
+            // Handler para cancelar
+            const handleCancel = () => {
+                modal.style.display = 'none';
+                reject(new Error('Operação cancelada pelo usuário'));
+            };
+
+            // Event listeners
+            confirmBtn.onclick = handleConfirm;
+            cancelBtn.onclick = handleCancel;
+            
+            // Enter key
+            input.onkeypress = (e) => {
+                if (e.key === 'Enter') {
+                    handleConfirm();
+                }
+            };
+
+            // ESC key
+            document.onkeydown = (e) => {
+                if (e.key === 'Escape') {
+                    handleCancel();
+                    document.onkeydown = null; // Remove listener
+                }
+            };
+
+            // Click fora do modal
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    handleCancel();
+                }
+            };
+        });
+    }
+
+    // Criar o modal de confirmação
+    createPasswordConfirmModal();
+    // ========================================================
+
+    // Função de login (inalterada)
     loginBtn.addEventListener('click', async () => {
         const password = passwordInput.value;
         const decodedPassword = getAdminPassword();
@@ -101,28 +180,33 @@ document.addEventListener('DOMContentLoaded', () => {
         editPostModal.style.display = 'block';
     }
 
+    // NOVA FUNÇÃO DE EDIÇÃO COM CONFIRMAÇÃO DE SENHA
     async function submitEditForm(event) {
         event.preventDefault();
-        const postId = document.getElementById('edit-post-id').value;
-        const title = document.getElementById('edit-title').value;
-        const imageUrl = document.getElementById('edit-image-url').value;
-        const description = document.getElementById('edit-description').value;
-        const author = document.getElementById('edit-author').value;
-        const tags = document.getElementById('edit-tags').value;
-        const photoDate = document.getElementById('edit-photo-date').value;
-
-        const postData = {
-            title,
-            image_url: imageUrl,
-            description,
-            author,
-            photo_date: photoDate,
-            tags,
-            color: ''
-        };
-
+        
         try {
-            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${getAdminPassword()}`, {
+            // Solicitar confirmação de senha
+            const adminPassword = await showPasswordConfirm();
+            
+            const postId = document.getElementById('edit-post-id').value;
+            const title = document.getElementById('edit-title').value;
+            const imageUrl = document.getElementById('edit-image-url').value;
+            const description = document.getElementById('edit-description').value;
+            const author = document.getElementById('edit-author').value;
+            const tags = document.getElementById('edit-tags').value;
+            const photoDate = document.getElementById('edit-photo-date').value;
+
+            const postData = {
+                title,
+                image_url: imageUrl,
+                description,
+                author,
+                photo_date: photoDate,
+                tags,
+                color: ''
+            };
+
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${encodeURIComponent(adminPassword)}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -138,9 +222,12 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Postagem atualizada com sucesso!');
             editPostModal.style.display = 'none';
             fetchPosts();
+            
         } catch (error) {
-            console.error('Erro ao atualizar postagem:', error);
-            alert(error.message);
+            if (error.message !== 'Operação cancelada pelo usuário') {
+                console.error('Erro ao atualizar postagem:', error);
+                alert(error.message);
+            }
         }
     }
 
@@ -148,13 +235,17 @@ document.addEventListener('DOMContentLoaded', () => {
         editPostForm.addEventListener('submit', submitEditForm);
     }
 
+    // NOVA FUNÇÃO DE EXCLUSÃO COM CONFIRMAÇÃO DE SENHA
     async function deletePost(postId) {
         if (!confirm(`Tem certeza que deseja excluir a postagem ${postId}?`)) {
             return;
         }
 
         try {
-            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${getAdminPassword()}`, {
+            // Solicitar confirmação de senha
+            const adminPassword = await showPasswordConfirm();
+
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${encodeURIComponent(adminPassword)}`, {
                 method: 'DELETE'
             });
 
@@ -165,13 +256,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             alert('Postagem excluída com sucesso!');
             fetchPosts();
+            
         } catch (error) {
-            console.error('Erro ao excluir postagem:', error);
-            alert(error.message);
+            if (error.message !== 'Operação cancelada pelo usuário') {
+                console.error('Erro ao excluir postagem:', error);
+                alert(error.message);
+            }
         }
     }
 
-    // Carregar postagens e popular a tabela
+    // Carregar postagens e popular a tabela (inalterada)
     async function fetchPosts() {
         try {
             const response = await fetch(`${API_URL}/api/posts?limit=${postsPerPage}&page=${currentPage}`);
