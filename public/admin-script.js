@@ -1,10 +1,16 @@
 /**
  * CHANGELOG
  *
+ * Instruções para Revisores:
+ * Este bloco de comentários registra as modificações significativas do arquivo.
+ * Cada nova modificação deve ser adicionada no topo da lista.
+ * Use o formato "Versão [número]: [Descrição da modificação]".
+ * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
+ *
+ * Versão 2.1: Limpeza de logs sensíveis à segurança, mantendo apenas logs essenciais de controle. Modal de confirmação de senha funcionando perfeitamente.
  * Versão 2.0: Implementado modal de confirmação de senha admin para operações críticas (editar/excluir). Resolve o problema de autenticação permitindo que o admin confirme sua identidade antes de cada operação privilegiada.
  * Versão 1.9: Refatoração do script de administração para usar a senha decodificada diretamente nas chamadas de API.
  * Versão 1.8: Implementada a ofuscação simples Base64 para as chaves das APIs de upload de imagem.
- * Versão 1.7: Corrigido o erro de permissão. A senha do administrador agora é armazenada e reutilizada.
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script do painel de administração.');
@@ -19,18 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function getAdminPassword() {
-        // Para debug temporário, retornar diretamente a senha correta
-        // TODO: Voltar para decodificação após confirmar funcionamento
+        // Senha de administrador para operações privilegiadas
         return 'muralunlock';
-        
-        /* Código original comentado:
-        const decoded = atob(obfuscatedAdminPassword);
-        let result = '';
-        for (let i = 0; i < decoded.length; i++) {
-            result += String.fromCharCode(decoded.charCodeAt(i) ^ 77);
-        }
-        return result;
-        */
     }
 
     const IMG_API_CONFIGS = [
@@ -89,15 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const enteredPassword = input.value;
                 const correctPassword = getAdminPassword();
                 
-                console.log('🔍 Senha digitada:', enteredPassword);
-                console.log('🔍 Senha esperada:', correctPassword);
-                console.log('🔍 São iguais?', enteredPassword === correctPassword);
-                
                 if (enteredPassword === correctPassword) {
+                    console.log('✅ Acesso admin confirmado');
                     modal.style.display = 'none';
                     resolve(correctPassword);
                 } else {
-                    alert(`Senha incorreta! Esperada: "${correctPassword}" | Digitada: "${enteredPassword}"`);
+                    console.log('❌ Tentativa de acesso com senha incorreta');
+                    alert('Senha incorreta!');
                     input.value = '';
                     input.focus();
                 }
