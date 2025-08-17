@@ -7,7 +7,7 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
- * Versão 1.5: Correção crítica na validação da senha de administrador. Implementada função isValidAdminPassword() com múltiplas verificações de comparação e logs temporários de debug para identificar problemas na autenticação. Adicionada robustez contra variações de encoding e whitespace.
+ * Versão 1.5: Correção crítica na validação da senha de administrador. Implementada função isValidAdminPassword() com decodificação adequada de URL encoding para resolver o problema de autenticação no painel de administração. A senha agora é corretamente decodificada antes da comparação.
  * Versão 1.4: Refatoração da lógica de PUT e DELETE para remover a restrição de 5 minutos para o administrador. Agora, a regra é aplicada apenas se a senha de admin não for fornecida ou estiver incorreta, garantindo que o acesso do painel de administração tenha controle total sobre as postagens.
  * Versão 1.3: Adicionada a função getSecurePassword() para ofuscar a senha do administrador, substituindo o método de senha dinâmica para maior segurança.
  * Versão 1.2: Melhoria no tratamento de parâmetros de busca e ordenação para evitar SQL injection, usando prepared statements.
@@ -29,41 +29,20 @@ function getSecurePassword() {
     return result;
 }
 
-// Função auxiliar para debug (remover em produção)
-function debugPasswordComparison(receivedPassword, expectedPassword) {
-    console.log('=== DEBUG PASSWORD COMPARISON ===');
-    console.log('Received password:', receivedPassword);
-    console.log('Expected password:', expectedPassword);
-    console.log('Lengths match:', receivedPassword?.length === expectedPassword?.length);
-    console.log('Are equal (===):', receivedPassword === expectedPassword);
-    console.log('Are equal (==):', receivedPassword == expectedPassword);
-    
-    if (receivedPassword && expectedPassword) {
-        console.log('Received bytes:', Array.from(receivedPassword).map(c => c.charCodeAt(0)));
-        console.log('Expected bytes:', Array.from(expectedPassword).map(c => c.charCodeAt(0)));
-    }
-    console.log('================================');
-}
-
-// Função mais robusta para verificar senha de admin
+// Função para validar senha de administrador com decodificação adequada
 function isValidAdminPassword(providedPassword) {
     if (!providedPassword) return false;
     
     const expectedPassword = getSecurePassword();
     
-    // Debug temporário - REMOVER EM PRODUÇÃO
-    debugPasswordComparison(providedPassword, expectedPassword);
-    
-    // Tentativas múltiplas de comparação
-    const checks = [
-        providedPassword === expectedPassword,
-        providedPassword.trim() === expectedPassword.trim(),
-        decodeURIComponent(providedPassword) === expectedPassword,
-        providedPassword === encodeURIComponent(expectedPassword)
-    ];
-    
-    console.log('Comparison results:', checks);
-    return checks.some(check => check);
+    // Tenta decodificar a URL primeiro (para resolver o problema de URL encoding)
+    try {
+        const decodedPassword = decodeURIComponent(providedPassword);
+        return decodedPassword === expectedPassword;
+    } catch (error) {
+        // Se falhar o decode, compara direto (fallback)
+        return providedPassword === expectedPassword;
+    }
 }
 
 export default async function handler(request, response) {
@@ -72,6 +51,7 @@ export default async function handler(request, response) {
         
         if (request.method === 'GET') {
             const { searchTerm = '', sortBy = 'created_at', sortOrder = 'desc', limit = 20, page = 1 } = request.query;
+
             const offset = (parseInt(page) - 1) * parseInt(limit);
             
             let whereClause = '';
@@ -106,6 +86,7 @@ export default async function handler(request, response) {
             `;
             
             queryParams.push(limit, offset);
+            
             const { rows: posts } = await client.query(dataQuery, queryParams);
             response.status(200).json({ posts, total: totalPosts });
 
@@ -124,12 +105,8 @@ export default async function handler(request, response) {
             const { title, image_url, description, author, photo_date, tags, color } = request.body;
             const adminPassword = request.query.admin_password;
 
-            console.log('PUT request - Admin password check starting...');
-
-            // CORREÇÃO: Usar a nova função de validação
+            // CORREÇÃO: Usar a nova função de validação com decodificação de URL
             if (!isValidAdminPassword(adminPassword)) {
-                console.log('Admin password invalid, applying 5-minute rule');
-                
                 const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
                 if (postCheck.rowCount === 0) {
                     return response.status(404).json({ message: 'Postagem não encontrada.' });
@@ -140,8 +117,6 @@ export default async function handler(request, response) {
                 if (createdTime < fiveMinutesAgo) {
                     return response.status(403).json({ message: 'Não é possível editar esta postagem. O limite de 5 minutos foi excedido.' });
                 }
-            } else {
-                console.log('Admin password valid, skipping 5-minute rule');
             }
             
             const query = `
@@ -163,12 +138,8 @@ export default async function handler(request, response) {
             const { id } = request.query;
             const adminPassword = request.query.admin_password;
             
-            console.log('DELETE request - Admin password check starting...');
-            
-            // CORREÇÃO: Usar a nova função de validação
+            // CORREÇÃO: Usar a nova função de validação com decodificação de URL
             if (!isValidAdminPassword(adminPassword)) {
-                console.log('Admin password invalid, applying 5-minute rule');
-                
                 const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
                 if (postCheck.rowCount === 0) {
                     return response.status(404).json({ message: 'Postagem não encontrada.' });
@@ -179,8 +150,6 @@ export default async function handler(request, response) {
                 if (createdTime < fiveMinutesAgo) {
                     return response.status(403).json({ message: 'Não é possível excluir esta postagem. O limite de 5 minutos foi excedido.' });
                 }
-            } else {
-                console.log('Admin password valid, skipping 5-minute rule');
             }
 
             const query = 'DELETE FROM memorial_schema.memorial WHERE id = $1';
