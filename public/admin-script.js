@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 2.4: Implementação de exportação dupla - CSV otimizado para Excel brasileiro (separador ponto-vírgula, formato de data dd/mm/yyyy) e planilha Excel nativa (.xlsx) com formatação rica usando SheetJS, incluindo cabeçalhos destacados, filtros automáticos, larguras otimizadas e links clicáveis.
  * Versão 2.3: Implementação completa do sistema de seleção múltipla com checkbox "selecionar todas", exclusão em massa com confirmação de senha, reorganização das colunas (autor, link da foto, datas, ações), remoção da coluna ID e adição da funcionalidade de exportação CSV com todos os dados das postagens.
  * Versão 2.2: Simplificação da interface de confirmação de senha usando popup nativo (prompt) ao invés de modal customizado. Interface mais minimalista e direta.
  * Versão 2.1: Limpeza de logs sensíveis à segurança, mantendo apenas logs essenciais de controle.
- * Versão 2.0: Implementado modal de confirmação de senha admin para operações críticas (editar/excluir).
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script do painel de administração.');
@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectAllCheckbox = document.getElementById('select-all-checkbox');
     const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
     const exportCsvBtn = document.getElementById('export-csv-btn');
+    const exportExcelBtn = document.getElementById('export-excel-btn');
     const selectedCountSpan = document.querySelector('.selected-count');
 
     const postsPerPage = 20;
@@ -192,10 +193,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // =================================================
 
-    // ========== FUNÇÃO DE EXPORTAÇÃO CSV ==========
+    // ========== FUNÇÕES DE EXPORTAÇÃO ==========
+    
+    // Função para formatar data no padrão brasileiro para export
+    function formatDateForExport(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+
+    // Função para escapar e limpar dados para export
+    function cleanDataForExport(data) {
+        if (!data) return '';
+        return String(data)
+            .replace(/[\r\n]+/g, ' ') // Remover quebras de linha
+            .replace(/\s+/g, ' ') // Normalizar espaços
+            .trim();
+    }
+
+    // CSV otimizado para Excel brasileiro
     async function exportToCSV() {
         try {
-            // Buscar todas as postagens (sem paginação)
+            // Buscar todas as postagens
             const response = await fetch(`${API_URL}/api/posts?limit=1000`);
             if (!response.ok) {
                 throw new Error('Erro ao buscar postagens para exportação');
@@ -209,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
-            // Criar cabeçalho CSV
+            // Cabeçalhos em português
             const headers = [
                 'ID',
                 'Título',
@@ -222,51 +244,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Cor'
             ];
             
-            // Função para escapar campos CSV
+            // Função para escapar campos CSV (padrão brasileiro)
             function escapeCSVField(field) {
                 if (field === null || field === undefined) return '';
                 const str = String(field);
-                if (str.includes('"') || str.includes(',') || str.includes('\n')) {
+                // Para CSV brasileiro, usar aspas duplas para campos com ponto-vírgula
+                if (str.includes('"') || str.includes(';') || str.includes('\n')) {
                     return '"' + str.replace(/"/g, '""') + '"';
                 }
                 return str;
             }
             
-            // Converter dados para CSV
-            const csvRows = [headers.join(',')];
+            // Criar CSV com separador brasileiro
+            const csvRows = [headers.join(';')]; // Ponto-vírgula para padrão brasileiro
             
             posts.forEach(post => {
                 const row = [
                     escapeCSVField(post.id),
-                    escapeCSVField(post.title),
-                    escapeCSVField(post.description),
-                    escapeCSVField(post.author),
-                    escapeCSVField(post.photo_date?.split('T')[0]),
-                    escapeCSVField(post.created_at?.split('T')[0]),
-                    escapeCSVField(post.tags),
+                    escapeCSVField(cleanDataForExport(post.title)),
+                    escapeCSVField(cleanDataForExport(post.description)),
+                    escapeCSVField(cleanDataForExport(post.author)),
+                    escapeCSVField(formatDateForExport(post.photo_date)),
+                    escapeCSVField(formatDateForExport(post.created_at)),
+                    escapeCSVField(cleanDataForExport(post.tags)),
                     escapeCSVField(post.image_url),
                     escapeCSVField(post.color)
                 ];
-                csvRows.push(row.join(','));
+                csvRows.push(row.join(';'));
             });
             
-            const csvContent = csvRows.join('\n');
+            const csvContent = csvRows.join('\r\n'); // Windows line endings
             
-            // Criar e baixar arquivo
-            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
+            // Criar arquivo com BOM para UTF-8 (compatibilidade Excel)
+            const BOM = '\ufeff';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
             
-            const today = new Date();
-            const dateString = today.toISOString().split('T')[0];
-            const fileName = `mural_postagens_${dateString}.csv`;
-            
-            link.setAttribute('href', url);
-            link.setAttribute('download', fileName);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Download
+            downloadFile(blob, `mural_postagens_${getTodayString()}.csv`);
             
             console.log(`✅ CSV exportado: ${posts.length} postagens`);
             
@@ -276,8 +290,125 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Excel nativo com formatação rica
+    async function exportToExcel() {
+        try {
+            // Verificar se SheetJS está disponível
+            if (typeof XLSX === 'undefined') {
+                // Carregar SheetJS dinamicamente
+                await loadSheetJS();
+            }
+            
+            // Buscar todas as postagens
+            const response = await fetch(`${API_URL}/api/posts?limit=1000`);
+            if (!response.ok) {
+                throw new Error('Erro ao buscar postagens para exportação');
+            }
+            
+            const data = await response.json();
+            const posts = data.posts;
+            
+            if (posts.length === 0) {
+                alert('Não há postagens para exportar.');
+                return;
+            }
+            
+            // Preparar dados para Excel
+            const excelData = posts.map(post => ({
+                'ID': post.id,
+                'Título': cleanDataForExport(post.title),
+                'Descrição': cleanDataForExport(post.description),
+                'Autor': cleanDataForExport(post.author),
+                'Data da Foto': post.photo_date ? new Date(post.photo_date) : '',
+                'Data da Postagem': post.created_at ? new Date(post.created_at) : '',
+                'Tags': cleanDataForExport(post.tags),
+                'URL da Imagem': post.image_url,
+                'Cor': post.color
+            }));
+            
+            // Criar workbook
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            
+            // Configurar larguras das colunas
+            ws['!cols'] = [
+                { width: 10 },  // ID
+                { width: 25 },  // Título
+                { width: 40 },  // Descrição
+                { width: 20 },  // Autor
+                { width: 15 },  // Data da Foto
+                { width: 18 },  // Data da Postagem
+                { width: 25 },  // Tags
+                { width: 50 },  // URL da Imagem
+                { width: 15 }   // Cor
+            ];
+            
+            // Configurar filtro automático
+            ws['!autofilter'] = { ref: `A1:I${posts.length + 1}` };
+            
+            // Congelar primeira linha (cabeçalhos)
+            ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+            
+            // Adicionar worksheet ao workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Postagens do Mural');
+            
+            // Gerar arquivo Excel
+            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([excelBuffer], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+            
+            // Download
+            downloadFile(blob, `mural_postagens_${getTodayString()}.xlsx`);
+            
+            console.log(`✅ Excel exportado: ${posts.length} postagens`);
+            
+        } catch (error) {
+            console.error('Erro na exportação Excel:', error);
+            alert('Erro ao exportar Excel. Tente novamente.');
+        }
+    }
+
+    // Função auxiliar para carregar SheetJS dinamicamente
+    function loadSheetJS() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    // Função auxiliar para download de arquivos
+    function downloadFile(blob, filename) {
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Liberar memória
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    // Função auxiliar para obter data atual formatada
+    function getTodayString() {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    }
+
+    // Event listeners para exportação
     if (exportCsvBtn) {
         exportCsvBtn.addEventListener('click', exportToCSV);
+    }
+    
+    if (exportExcelBtn) {
+        exportExcelBtn.addEventListener('click', exportToExcel);
     }
     // ===============================================
 
