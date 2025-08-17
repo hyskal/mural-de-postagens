@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 1.5: Corrigido o erro de permissão. O script agora utiliza a senha ofuscada para autenticar corretamente as ações do administrador, permitindo editar e excluir postagens a qualquer momento, sem o limite de 5 minutos.
  * Versão 1.4: Corrigido o erro Uncaught TypeError. Removida a lógica do formulário de postagem, que não pertence a esta página, e adicionada a lógica de login do painel de administração.
  * Versão 1.3: Adicionada a solução de quebra de texto (word-break: break-all;) para lidar com strings longas sem espaços no campo de descrição.
  * Versão 1.2: Ofuscação das chaves das APIs de upload de imagem para maior segurança.
- * Versão 1.1: Implementação da validação de 300 caracteres para o campo de descrição no formulário e limite de exibição de 100 caracteres no mural.
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script do painel de administração.');
@@ -18,8 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_URL = 'https://mural-de-postagens.vercel.app';
     const obfuscatedKey1 = 'DVMQEQkNDQMREwkNDBIPEQ0QERIMDAQ=';
     const obfuscatedKey2 = 'H0oGCRMQF0pGRxAXGAgQGgkVGhIVFkAG';
+    const obfuscatedAdminPassword = 'JFkpJF0lJF0pJFkpJFopJFkpJF4lJFopJF8lJFslJE0=';
 
-    function getSecureKey(obfuscated) {
+    function getSecureValue(obfuscated) {
         const decoded = atob(obfuscated);
         let result = '';
         for (let i = 0; i < decoded.length; i++) {
@@ -29,8 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const IMG_API_CONFIGS = [
-        { name: 'ImgBB - eduk', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureKey(obfuscatedKey1) },
-        { name: 'ImgBB - enova', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureKey(obfuscatedKey2) }
+        { name: 'ImgBB - eduk', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureValue(obfuscatedKey1) },
+        { name: 'ImgBB - enova', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureValue(obfuscatedKey2) }
     ];
 
     // Seletores dos elementos do DOM
@@ -50,19 +51,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Função de login
     loginBtn.addEventListener('click', async () => {
         const password = passwordInput.value;
-        try {
-            const response = await fetch(`${API_URL}/api/posts?admin_password=${password}`);
-            if (response.ok) {
-                console.log('Login bem-sucedido!');
-                loginModal.style.display = 'none';
-                adminPage.style.display = 'block';
-                fetchPosts();
-            } else {
-                alert('Senha incorreta!');
-            }
-        } catch (error) {
-            console.error('Erro ao verificar senha:', error);
-            alert('Erro ao tentar fazer login. Tente novamente.');
+        const adminPassword = getSecureValue(obfuscatedAdminPassword);
+        
+        if (password === adminPassword) {
+            console.log('Login bem-sucedido!');
+            loginModal.style.display = 'none';
+            adminPage.style.display = 'block';
+            fetchPosts();
+        } else {
+            alert('Senha incorreta!');
         }
     });
 
@@ -103,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const author = document.getElementById('edit-author').value;
         const tags = document.getElementById('edit-tags').value;
         const photoDate = document.getElementById('edit-photo-date').value;
-        const password = passwordInput.value;
+        const adminPassword = getSecureValue(obfuscatedAdminPassword);
 
         const postData = {
             title,
@@ -116,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${password}`, {
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${adminPassword}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -143,13 +140,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function deletePost(postId) {
-        const password = passwordInput.value;
+        const adminPassword = getSecureValue(obfuscatedAdminPassword);
         if (!confirm(`Tem certeza que deseja excluir a postagem ${postId}?`)) {
             return;
         }
 
         try {
-            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${password}`, {
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${adminPassword}`, {
                 method: 'DELETE'
             });
 
