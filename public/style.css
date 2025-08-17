@@ -1,3 +1,17 @@
+/**
+ * CHANGELOG
+ *
+ * Instruções para Revisores:
+ * Este bloco de comentários registra as modificações significativas do arquivo.
+ * Cada nova modificação deve ser adicionada no topo da lista.
+ * Use o formato "Versão [número]: [Descrição da modificação]".
+ * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
+ *
+ * Versão 1.3: Adicionada a propriedade `word-break: break-all;` na classe `.post-description` para garantir quebras de linha corretas para textos longos sem espaços, melhorando o layout.
+ * Versão 1.2: Adicionados estilos para o seletor de cores no formulário, permitindo temas de cor personalizados para as postagens.
+ * Versão 1.1: Implementados os efeitos de 'glassmorphism' com `backdrop-filter` e sombras para criar um visual moderno e transparente.
+ * Versão 1.0: Versão inicial com os estilos base para a estrutura do mural, cards de postagem e modais.
+ */
 :root {
     --primary-color: #2c3e50;
     --secondary-color: #34495e;
@@ -107,7 +121,8 @@ header h1 {
     font-size: 1em;
     color: var(--text-color);
     margin: 10px 0;
-    overflow-wrap: break-word;
+    overflow-wrap: break-word; /* Já existente */
+    word-break: break-all; /* Adicione esta linha para garantir a quebra */
 }
 
 .post-meta {
