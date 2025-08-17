@@ -17,28 +17,40 @@
 
     <div class="main-container">
         <div class="controls-container">
-            <button id="open-post-modal" class="flashcard-button">Nova Postagem</button>
+            <div class="header-controls">
+                <button id="open-post-modal" class="nova-postagem-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5v14"></path>
+                    </svg>
+                    <span>Nova Postagem</span>
+                </button>
 
-            <div class="search-container">
-                <input type="text" id="search-input" placeholder="Buscar por título ou autor...">
-                <button id="search-btn" class="flashcard-button">Buscar</button>
-            </div>
-            
-            <div class="sort-container">
-                <label for="sort-by">Ordenar por:</label>
-                <select id="sort-by">
-                    <option value="created_at">Data da Postagem</option>
-                    <option value="photo_date">Data da Foto</option>
-                    <option value="title">Título</option>
-                    <option value="author">Autor</option>
-                </select>
-                <select id="sort-order">
-                    <option value="desc">Decrescente</option>
-                    <option value="asc">Crescente</option>
-                </select>
+                <div class="search-controls">
+                    <div class="search-input-container">
+                        <input type="text" id="search-input" class="search-input" placeholder="Buscar por título, autor ou tag..." value="">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.3-4.3"></path>
+                        </svg>
+                    </div>
+
+                    <div class="select-controls">
+                        <select id="sort-by" class="select-trigger sort-select">
+                            <option value="created_at">Data da Postagem</option>
+                            <option value="photo_date">Data da Foto</option>
+                            <option value="title">Título</option>
+                            <option value="author">Autor</option>
+                        </select>
+
+                        <select id="sort-order" class="select-trigger sort-select">
+                            <option value="desc">Decrescente</option>
+                            <option value="asc">Crescente</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
-
         <div id="mural-container">
             </div>
 
