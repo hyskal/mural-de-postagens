@@ -67,16 +67,22 @@ header h1 {
 
 /* ESTILOS APRIMORADOS PARA O CONTROLS-CONTAINER */
 .controls-container {
-    background: rgba(122, 6, 216, 0.5);
+    background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 16px;
     padding: 24px;
     margin: 20px auto 32px auto;
-    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     max-width: 900px;
     width: 100%;
+}
+
+@media (max-width: 500px) {
+    .controls-container {
+        padding: 15px; /* Reduz o padding em telas pequenas para evitar transbordamento */
+    }
 }
 
 .header-controls {
@@ -98,8 +104,8 @@ header h1 {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: linear-gradient(to right, #6366f1, #a855f7);
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--light-text-color);
     border: none;
     border-radius: 12px;
     padding: 12px 24px;
@@ -113,14 +119,14 @@ header h1 {
 }
 
 .nova-postagem-btn:hover {
-    background: linear-gradient(to right, #4f46e5, #9333ea);
+    background-color: var(--secondary-color);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
     transform: translateY(-1px);
 }
 
 .nova-postagem-btn:focus {
     outline: none;
-    box-shadow: 0 0 0 2px #6366f1, 0 6px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 2px var(--primary-color), 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .nova-postagem-btn svg {
@@ -173,7 +179,7 @@ header h1 {
 
 .search-input:focus {
     outline: none;
-    box-shadow: 0 0 0 2px #6366f1;
+    box-shadow: 0 0 0 2px var(--primary-color);
     border-color: transparent;
     background: rgba(255, 255, 255, 0.15);
 }
@@ -226,7 +232,7 @@ header h1 {
 
 .select-trigger:focus {
     outline: none;
-    box-shadow: 0 0 0 2px #6366f1;
+    box-shadow: 0 0 0 2px var(--primary-color);
     border-color: transparent;
     background: rgba(255, 255, 255, 0.15);
 }
