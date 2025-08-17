@@ -159,17 +159,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 50);
     }
 
-    function showLoading() {
-        postForm.style.display = 'none';
-        loadingModal.style.display = 'block';
-        updateLoading(0, 'Iniciando...');
-    }
+// Classe para gerenciar o loading minimalista
+class MinimalLoader {
+    constructor() {
+        this.progressCircle = document.getElementById('progressCircle');
+        this.progressText = document.getElementById('progressText');
+        this.statusText = document.getElementById('statusText');
+        this.substatusText = document.getElementById('substatusText');
+        this.uploadIcon = document.getElementById('uploadIcon');
+        this.successCheck = document.getElementById('successCheck');
+        this.container = loadingModal;
+        
+        this.steps = {
+            1: document.getElementById('step1'),
+            2: document.getElementById('step2'),
+            3: document.getElementById('step3')
+        };
 
-    function updateLoading(percent, status) {
-        loadingBarFill.style.width = `${percent}%`;
-        loadingPercent.textContent = `${percent}%`;
-        loadingStatus.textContent = status;
-    }
+        this.circumference = 2 * Math.PI * 54;
+        if (this.progressCircle) {
+            this.progressCircle.style.strokeDasharray = this.circumference;
+            this.progressCircle.style.strokeDash
 
     async function uploadImage(imageFile) {
         if (!imageFile) {
