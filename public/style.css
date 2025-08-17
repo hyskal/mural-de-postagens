@@ -163,10 +163,10 @@ header h1 {
     width: 100%;
     height: 40px;
     background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.5); /* Borda semi-transparente adicionada */
     border-radius: 12px;
     padding: 12px 12px 12px 40px;
-    color: white;
+    color: var(--primary-color); /* Cor do texto alterada para preto */
     font-size: 14px;
     font-family: 'Poppins', sans-serif;
     transition: all 0.3s ease;
@@ -174,7 +174,7 @@ header h1 {
 }
 
 .search-input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--secondary-color); /* Cor do placeholder alterada para preto */
 }
 
 .search-input:focus {
@@ -189,7 +189,7 @@ header h1 {
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--primary-color); /* Cor do ícone alterada para preto */
     width: 16px;
     height: 16px;
     pointer-events: none;
@@ -203,10 +203,10 @@ header h1 {
 .select-trigger {
     height: 40px;
     background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.5); /* Borda semi-transparente adicionada */
     border-radius: 12px;
     padding: 0 32px 0 16px;
-    color: white;
+    color: var(--primary-color); /* Cor do texto alterada para preto */
     font-size: 14px;
     font-family: 'Poppins', sans-serif;
     cursor: pointer;
@@ -219,8 +219,8 @@ header h1 {
     -moz-appearance: none;
     appearance: none;
     
-    /* Seta personalizada */
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.8)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m6 9 6 6 6-6'/%3e%3c/svg%3e");
+    /* Seta personalizada (SVG com cor escura) */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgb(44,62,80)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m6 9 6 6 6-6'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 16px;
@@ -499,13 +499,11 @@ footer p {
     font-weight: 400;
 }
 
-/* ===== ADICIONE ESTE CSS AO SEU ARQUIVO style.css ===== */
-
 /* Estilos para o container do tema de cores */
 .color-theme-container {
-    display: flex; /* Alinha o label e os swatches horizontalmente */
-    align-items: center; /* Centraliza verticalmente os itens */
-    gap: 15px; /* Adiciona um espaço entre o label e os swatches */
+    display: flex;
+    align-items: center;
+    gap: 15px;
     margin-bottom: 20px;
     padding: 15px;
     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -514,9 +512,9 @@ footer p {
 }
 
 .color-theme-container label {
-    display: inline-block; /* Permite que o label fique na mesma linha */
+    display: inline-block;
     font-weight: 600;
-    margin-bottom: 0 !important; /* Remove o espaçamento inferior */
+    margin-bottom: 0 !important;
     color: #333;
     font-size: 14px;
     width: auto !important;
@@ -575,4 +573,54 @@ footer p {
 .color-swatch[data-color="rgba(255, 255, 255, 0.8)"].selected::after {
     color: #2c3e50;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Estilos para a paginação */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.pagination-container button {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: var(--primary-color);
+    color: var(--light-text-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.pagination-container button:hover:not(:disabled) {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.pagination-container button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+#page-info {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 15px;
+    background: var(--flashcard-background);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--primary-color);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
 }
