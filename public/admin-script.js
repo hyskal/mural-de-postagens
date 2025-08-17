@@ -26,6 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return atob(obfuscated);
     }
     
+    function getAdminPassword() {
+        const decoded = atob(obfuscatedAdminPassword);
+        let result = '';
+        for (let i = 0; i < decoded.length; i++) {
+            result += String.fromCharCode(decoded.charCodeAt(i) ^ 77);
+        }
+        return result;
+    }
+
     const IMG_API_CONFIGS = [
         { name: 'ImgBB - eduk', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureValue(obfuscatedKey1) },
         { name: 'ImgBB - enova', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureValue(obfuscatedKey2) }
@@ -114,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${adminPassword}`, {
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${getAdminPassword()}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -146,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${adminPassword}`, {
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${getAdminPassword()}`, {
                 method: 'DELETE'
             });
 
@@ -194,5 +203,4 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Erro ao buscar postagens. Verifique sua conexão ou a API.');
         }
     }
-
 });
