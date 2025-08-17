@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 1.4: Refatoração da lógica de PUT e DELETE para remover a restrição de 5 minutos para o administrador. Agora, a regra é aplicada apenas se a senha de admin não for fornecida ou estiver incorreta, garantindo que o acesso do painel de administração tenha controle total sobre as postagens.
  * Versão 1.3: Adicionada a função getSecurePassword() para ofuscar a senha do administrador, substituindo o método de senha dinâmica para maior segurança.
  * Versão 1.2: Melhoria no tratamento de parâmetros de busca e ordenação para evitar SQL injection, usando prepared statements.
  * Versão 1.1: Otimização das consultas ao banco de dados para incluir contagem total de posts e melhorar o desempenho da paginação.
- * Versão 1.0: Versão inicial da API com endpoints para GET, POST, PUT e DELETE de postagens.
  */
 const { Pool } = require('pg');
 
