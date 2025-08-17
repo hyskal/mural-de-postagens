@@ -18,7 +18,7 @@ const pool = new Pool({
     connectionString: process.env.NEON_CONNECTION_STRING,
 });
 
-const obfuscated = 'JFkpJF0lJF0pJFkpJFopJFkpJF4lJFopJF8lJFslJE0=';
+const obfuscated = 'JCFzYCFsYSFzYCFsJCFvYCFqYCFrJCE=';
 
 function getSecurePassword() {
     const decoded = atob(obfuscated);
