@@ -1,3 +1,4 @@
+
 /**
  * CHANGELOG
  *
@@ -5,12 +6,12 @@
  * Este bloco de comentários registra as modificações significativas do arquivo.
  * Cada nova modificação deve ser adicionada no topo da lista.
  * Use o formato "Versão [número]: [Descrição da modificação]".
- * Mantenha a lista limitadas 4 últimas alterações para clareza e concisão.
+ * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
- * Versão 1.8: Adicionado botão flutuante "+" no header ao lado do título para criar nova postagem. Design moderno com efeitos hover, pulsação sutil e posicionamento responsivo que permanece fixo durante o scroll.
  * Versão 1.7: Correção completa do sistema de loading - removidos estilos conflitantes, unificado o design em um loading moderno com círculo de progresso, animações suaves e indicadores de etapa funcionais.
  * Versão 1.6: Refinados os estilos do container de controle com melhorias na responsividade, efeitos focus e compatibilidade cross-browser para selects personalizados.
  * Versão 1.5: Adicionados novos estilos para o container de controle e elementos de busca/ordenação, garantindo um design moderno e responsivo sem afetar o restante do layout.
+ * Versão 1.4: Implementada a ofuscação simples Base64 para as chaves das APIs de upload de imagem, resolvendo os erros de requisição 400.
  */
 :root {
     --primary-color: #2c3e50;
@@ -23,7 +24,6 @@
     --border-color: rgba(255, 255, 255, 0.4);
     --shadow-color: rgba(0, 0, 0, 0.08);
     --glass-shadow: 0 4px 30px var(--shadow-color);
-    --accent-color: #3498db;
 }
 
 body {
@@ -52,163 +52,12 @@ header {
     position: sticky;
     top: 0;
     z-index: 999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
 }
 
 header h1 {
     margin: 0;
     font-size: 28px;
     font-weight: 700;
-    flex: 1;
-    text-align: center;
-}
-
-header h1 a {
-    color: inherit;
-    text-decoration: none;
-}
-
-header h1 a:hover {
-    color: var(--secondary-color);
-    transition: color 0.3s ease;
-}
-
-/* BOTÃO FLUTUANTE + NO HEADER */
-.header-floating-btn {
-    position: absolute;
-    right: 24px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--accent-color), #2980b9);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    font-weight: bold;
-    color: white;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
-    animation: subtlePulse 3s ease-in-out infinite;
-}
-
-.header-floating-btn:hover {
-    transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
-    background: linear-gradient(135deg, #2980b9, var(--accent-color));
-}
-
-.header-floating-btn:active {
-    transform: translateY(-50%) scale(0.95);
-    box-shadow: 0 2px 10px rgba(52, 152, 219, 0.2);
-}
-
-.header-floating-btn::before {
-    content: '+';
-    font-size: 28px;
-    line-height: 1;
-}
-
-/* Animação sutil de pulsação */
-@keyframes subtlePulse {
-    0%, 100% {
-        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-    }
-    50% {
-        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.5);
-    }
-}
-
-/* Tooltip para o botão */
-.header-floating-btn::after {
-    content: 'Nova Postagem';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(44, 62, 80, 0.9);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.3s ease;
-    margin-top: 8px;
-    font-family: 'Poppins', sans-serif;
-}
-
-.header-floating-btn:hover::after {
-    opacity: 1;
-    transform: translateX(-50%) translateY(4px);
-}
-
-/* Responsividade do header */
-@media (max-width: 768px) {
-    header {
-        padding: 16px 20px;
-        flex-direction: column;
-        gap: 12px;
-    }
-    
-    header h1 {
-        font-size: 24px;
-        margin-bottom: 8px;
-    }
-    
-    .header-floating-btn {
-        position: static;
-        transform: none;
-        width: 44px;
-        height: 44px;
-        font-size: 20px;
-    }
-    
-    .header-floating-btn:hover {
-        transform: scale(1.1);
-    }
-    
-    .header-floating-btn::before {
-        font-size: 24px;
-    }
-    
-    .header-floating-btn::after {
-        top: -40px;
-        margin-top: 0;
-    }
-    
-    .header-floating-btn:hover::after {
-        transform: translateX(-50%) translateY(-4px);
-    }
-}
-
-@media (max-width: 480px) {
-    header {
-        padding: 14px 16px;
-    }
-    
-    header h1 {
-        font-size: 20px;
-    }
-    
-    .header-floating-btn {
-        width: 40px;
-        height: 40px;
-    }
-    
-    .header-floating-btn::before {
-        font-size: 20px;
-    }
 }
 
 .main-container {
