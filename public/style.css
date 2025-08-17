@@ -492,3 +492,79 @@ footer p {
     font-size: 14px;
     font-weight: 400;
 }
+
+/* ===== ADICIONE ESTE CSS AO SEU ARQUIVO style.css ===== */
+
+/* Estilos para o container do tema de cores */
+.color-theme-container {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.color-theme-container label {
+    display: block !important;
+    font-weight: 600;
+    margin-bottom: 10px !important;
+    color: #333;
+    font-size: 14px;
+    width: auto !important;
+}
+
+/* Container das cores */
+.color-selector {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* Estilos individuais das cores */
+.color-swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+    display: block !important;
+}
+
+.color-swatch:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.color-swatch.selected {
+    border-color: #2c3e50;
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(44, 62, 80, 0.4);
+}
+
+.color-swatch.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #2c3e50;
+    font-weight: bold;
+    font-size: 16px;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* Correção especifica para a primeira cor (branca) */
+.color-swatch[data-color="rgba(255, 255, 255, 0.8)"] {
+    border: 2px solid #ccc;
+}
+
+.color-swatch[data-color="rgba(255, 255, 255, 0.8)"].selected::after {
+    color: #2c3e50;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
