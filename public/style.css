@@ -67,14 +67,14 @@ header h1 {
 
 /* ESTILOS APRIMORADOS PARA O CONTROLS-CONTAINER */
 .controls-container {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(30, 58, 138, 0.15);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.3);
     border-radius: 16px;
     padding: 24px;
     margin: 20px auto 32px auto;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.2);
     max-width: 900px;
     width: 100%;
 }
