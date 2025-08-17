@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 1.9: Sistema de loading completamente renovado - implementado design moderno com círculo de progresso animado, indicadores de etapa, animações suaves e feedback visual aprimorado durante todo o processo de envio.
  * Versão 1.8: Correção crítica - Removida a classe MinimalLoader incompleta que causava erro de sintaxe e impedia o funcionamento das postagens e botão Nova Postagem. Mantidas as funções de loading existentes.
  * Versão 1.7: Reorganização da lógica de carregamento para uma solução minimalista. A classe 'hidden' foi removida do HTML e o controle de exibição do modal de carregamento é feito diretamente no JavaScript, garantindo que a barra de progresso seja sempre visível durante o processo de envio.
  * Versão 1.6: Implementada uma correção na lógica de upload de imagem para garantir que a barra de progresso seja exibida corretamente mesmo em caso de falha no envio. A barra de carregamento agora completa o progresso e exibe uma mensagem de erro, ao invés de desaparecer abruptamente.
- * Versão 1.5: Correção completa do seletor de cores - adicionada inicialização robusta, logs de depuração e captura correta da cor selecionada.
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script.');
@@ -54,51 +54,127 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageInfoSpan = document.getElementById('page-info');
 
     const loadingModal = document.getElementById('loading-modal');
+    const progressCircle = document.getElementById('progressCircle');
+    const progressText = document.getElementById('progressText');
+    const statusText = document.getElementById('statusText');
+    const substatusText = document.getElementById('substatusText');
+    const uploadIcon = document.querySelector('.upload-icon');
+    const successCheck = document.getElementById('successCheck');
+    const steps = {
+        1: document.getElementById('step1'),
+        2: document.getElementById('step2'),
+        3: document.getElementById('step3')
+    };
 
-    // Função para mostrar o loading
-    function showLoading() {
-        if (postForm) postForm.style.display = 'none';
-        if (loadingModal) loadingModal.style.display = 'block';
-        updateLoading(10, 'Preparando envio...');
+    // Classe para gerenciar o loading moderno
+    class LoadingManager {
+        constructor() {
+            this.circumference = 2 * Math.PI * 54;
+            if (progressCircle) {
+                progressCircle.style.strokeDasharray = this.circumference;
+                progressCircle.style.strokeDashoffset = this.circumference;
+            }
+        }
+
+        show() {
+            if (postForm) postForm.style.display = 'none';
+            if (loadingModal) {
+                loadingModal.style.display = 'flex';
+                loadingModal.classList.add('show');
+            }
+            this.reset();
+            this.updateProgress(0, 'Preparando envio...', 'Validando dados');
+        }
+
+        hide() {
+            if (loadingModal) {
+                loadingModal.classList.add('hide');
+                setTimeout(() => {
+                    loadingModal.style.display = 'none';
+                    loadingModal.classList.remove('show', 'hide');
+                    if (postForm) postForm.style.display = 'block';
+                }, 300);
+            }
+        }
+
+        reset() {
+            // Resetar todos os elementos
+            Object.values(steps).forEach(step => {
+                if (step) {
+                    step.classList.remove('active', 'completed');
+                }
+            });
+            
+            if (uploadIcon) uploadIcon.style.display = 'block';
+            if (successCheck) {
+                successCheck.style.display = 'none';
+                successCheck.classList.remove('show');
+            }
+            
+            // Resetar círculo de progresso
+            if (progressCircle) {
+                progressCircle.style.strokeDashoffset = this.circumference;
+            }
+        }
+
+        updateProgress(percent, message, submessage = '') {
+            // Atualizar círculo de progresso
+            if (progressCircle) {
+                const offset = this.circumference - (percent / 100) * this.circumference;
+                progressCircle.style.strokeDashoffset = offset;
+            }
+            
+            // Atualizar textos
+            if (progressText) progressText.textContent = Math.round(percent) + '%';
+            if (statusText) statusText.textContent = message;
+            if (substatusText) substatusText.textContent = submessage;
+            
+            // Atualizar indicadores de etapa
+            this.updateSteps(percent);
+        }
+
+        updateSteps(percent) {
+            if (percent >= 20 && steps[1]) {
+                steps[1].classList.add('active');
+            }
+            if (percent >= 60 && steps[2]) {
+                if (steps[1]) steps[1].classList.replace('active', 'completed');
+                steps[2].classList.add('active');
+            }
+            if (percent >= 90 && steps[3]) {
+                if (steps[2]) steps[2].classList.replace('active', 'completed');
+                steps[3].classList.add('active');
+            }
+        }
+
+        showSuccess(message = 'Postagem publicada com sucesso!') {
+            if (steps[3]) steps[3].classList.replace('active', 'completed');
+            if (uploadIcon) uploadIcon.style.display = 'none';
+            if (successCheck) {
+                successCheck.style.display = 'block';
+                successCheck.classList.add('show');
+            }
+            if (statusText) statusText.textContent = message;
+            if (substatusText) substatusText.textContent = 'Redirecionando...';
+            this.updateProgress(100, message, 'Concluído');
+        }
+
+        showError(message = 'Erro durante o processo') {
+            if (statusText) statusText.textContent = message;
+            if (substatusText) substatusText.textContent = 'Tente novamente';
+            
+            // Adicionar classe de erro
+            const container = document.querySelector('.loading-container');
+            if (container) container.classList.add('error-state');
+            
+            setTimeout(() => {
+                this.hide();
+                if (container) container.classList.remove('error-state');
+            }, 3000);
+        }
     }
 
-    // Função para atualizar o progresso do loading
-    function updateLoading(percent, message) {
-        const progressCircle = document.getElementById('progressCircle');
-        const progressText = document.getElementById('progressText');
-        const statusText = document.getElementById('statusText');
-        
-        if (progressCircle) {
-            const circumference = 2 * Math.PI * 54;
-            const offset = circumference - (percent / 100) * circumference;
-            progressCircle.style.strokeDashoffset = offset;
-        }
-        
-        if (progressText) {
-            progressText.textContent = Math.round(percent) + '%';
-        }
-        
-        if (statusText) {
-            statusText.textContent = message;
-        }
-        
-        // Atualizar indicadores de etapa
-        const steps = {
-            1: document.getElementById('step1'),
-            2: document.getElementById('step2'),
-            3: document.getElementById('step3')
-        };
-        
-        if (percent >= 30 && steps[1]) {
-            steps[1].classList.add('active');
-        }
-        if (percent >= 60 && steps[2]) {
-            steps[2].classList.add('active');
-        }
-        if (percent >= 90 && steps[3]) {
-            steps[3].classList.add('active');
-        }
-    }
+    const loadingManager = new LoadingManager();
 
     function initializeColorSelector() {
         console.log('🎨 Inicializando seletor de cores...');
@@ -188,7 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('post-image').required = true;
         document.getElementById('image-info').style.display = 'none';
         postForm.style.display = 'block';
-        loadingModal.style.display = 'none';
         postForm.reset();
         
         setTimeout(() => {
@@ -207,9 +282,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return null;
         }
         
-        for (const config of IMG_API_CONFIGS) {
+        for (let i = 0; i < IMG_API_CONFIGS.length; i++) {
+            const config = IMG_API_CONFIGS[i];
             try {
-                updateLoading(30, `Fazendo upload da imagem usando ${config.name}...`);
+                loadingManager.updateProgress(20 + (i * 10), `Enviando imagem via ${config.name}...`, 'Fazendo upload');
+                
                 const formData = new FormData();
                 formData.append('key', config.key);
                 formData.append('image', imageFile);
@@ -222,16 +299,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success) {
-                        updateLoading(60, `Imagem enviada com sucesso. Publicando no mural...`);
+                        loadingManager.updateProgress(60, 'Imagem enviada com sucesso!', 'Preparando postagem');
                         return data.data.url;
                     }
                 }
             } catch (error) {
                 console.warn(`Erro de comunicação com a API ${config.name}.`, error);
+                if (i === IMG_API_CONFIGS.length - 1) {
+                    loadingManager.showError('Falha no upload da imagem');
+                    return null;
+                }
             }
         }
-        updateLoading(100, 'Falha no upload da imagem.');
-        console.error('Todas as chaves de API falharam no upload.');
+        
+        loadingManager.showError('Todas as APIs de imagem falharam');
         return null;
     }
     
@@ -397,6 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (postForm) {
         postForm.addEventListener('submit', async (event) => {
             event.preventDefault();
+            
             const postId = document.getElementById('post-id').value;
             const title = document.getElementById('post-title').value;
             const description = document.getElementById('post-description').value;
@@ -416,6 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            // Validações
             if (!title || !description || !author || !photoDate) {
                 alert('Por favor, preencha todos os campos obrigatórios.');
                 return;
@@ -436,19 +519,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            showLoading();
-            
+            // Iniciar loading
+            loadingManager.show();
+            loadingManager.updateProgress(10, 'Validando dados...', 'Verificando informações');
+
             let imageUrl = null;
+            
+            // Upload de imagem se fornecida
             if (imageFile) {
                 imageUrl = await uploadImage(imageFile);
                 if (!imageUrl) {
-                    loadingModal.style.display = 'none';
-                    postForm.style.display = 'block';
+                    loadingManager.hide();
                     alert('Erro ao enviar a imagem. Por favor, tente novamente.');
                     return;
                 }
             }
 
+            // Preparar dados da postagem
             const postData = {
                 title,
                 image_url: imageUrl,
@@ -463,7 +550,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const endpoint = postId ? `${API_URL}/api/posts?id=${postId}` : `${API_URL}/api/posts`;
             
             try {
-                updateLoading(80, 'Conectando ao banco de dados...');
+                loadingManager.updateProgress(80, 'Salvando postagem...', 'Conectando ao banco de dados');
+                
                 const response = await fetch(endpoint, {
                     method: method,
                     headers: {
@@ -477,19 +565,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 const result = await response.json();
-                localStorage.setItem('createdPostId', result.id);
-                localStorage.setItem('createdPostTime', result.created_at);
+                
+                // Armazenar informações da postagem criada
+                if (result.id) {
+                    localStorage.setItem('createdPostId', result.id);
+                    localStorage.setItem('createdPostTime', result.created_at);
+                }
 
-                updateLoading(100, 'Publicando...');
+                loadingManager.updateProgress(95, 'Finalizando...', 'Quase pronto');
+                
+                // Mostrar sucesso
                 setTimeout(() => {
-                    alert('Postagem realizada com sucesso!');
-                    window.location.reload();
-                }, 1000);
+                    loadingManager.showSuccess(postId ? 'Postagem atualizada!' : 'Postagem publicada!');
+                    
+                    setTimeout(() => {
+                        loadingManager.hide();
+                        window.location.reload();
+                    }, 2000);
+                }, 500);
+                
             } catch (error) {
                 console.error('Erro ao salvar a postagem na API:', error);
-                alert('Erro ao salvar a postagem. Tente novamente.');
-                loadingModal.style.display = 'none';
-                postForm.style.display = 'block';
+                loadingManager.showError('Erro ao salvar postagem');
+                setTimeout(() => {
+                    alert('Erro ao salvar a postagem. Tente novamente.');
+                }, 1000);
             }
         });
     }
@@ -521,10 +621,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Função global para ampliar imagem
     window.enlargeImage = (imageUrl) => {
         enlargedImage.src = imageUrl;
         enlargedImageModal.style.display = 'block';
     };
 
+    // Inicializar aplicação
     fetchPosts();
 });
