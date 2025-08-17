@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 1.6: Corrigido o erro de login. A validação de senha agora é realizada pela API de backend, o que é mais seguro e garante o acesso correto ao painel de administração.
  * Versão 1.5: Corrigido o erro de permissão. O script agora utiliza a senha ofuscada para autenticar corretamente as ações do administrador, permitindo editar e excluir postagens a qualquer momento, sem o limite de 5 minutos.
  * Versão 1.4: Corrigido o erro Uncaught TypeError. Removida a lógica do formulário de postagem, que não pertence a esta página, e adicionada a lógica de login do painel de administração.
  * Versão 1.3: Adicionada a solução de quebra de texto (word-break: break-all;) para lidar com strings longas sem espaços no campo de descrição.
- * Versão 1.2: Ofuscação das chaves das APIs de upload de imagem para maior segurança.
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script do painel de administração.');
@@ -51,15 +51,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Função de login
     loginBtn.addEventListener('click', async () => {
         const password = passwordInput.value;
-        const adminPassword = getSecureValue(obfuscatedAdminPassword);
-        
-        if (password === adminPassword) {
-            console.log('Login bem-sucedido!');
-            loginModal.style.display = 'none';
-            adminPage.style.display = 'block';
-            fetchPosts();
-        } else {
-            alert('Senha incorreta!');
+        try {
+            const response = await fetch(`${API_URL}/api/posts?admin_password=${password}`);
+            if (response.ok) {
+                console.log('Login bem-sucedido!');
+                loginModal.style.display = 'none';
+                adminPage.style.display = 'block';
+                fetchPosts();
+            } else {
+                alert('Senha incorreta!');
+            }
+        } catch (error) {
+            console.error('Erro ao verificar senha:', error);
+            alert('Erro ao tentar fazer login. Tente novamente.');
         }
     });
 
