@@ -7,28 +7,25 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 1.8: Implementada a ofuscação simples Base64 para as chaves das APIs de upload de imagem, resolvendo os erros de requisição 400. Corrigido o erro de permissão. A senha do administrador agora é armazenada e reutilizada em todas as requisições (edição, exclusão), garantindo que a regra de 5 minutos não seja aplicada.
+ * Versão 1.7: Corrigido o erro de permissão. A senha do administrador agora é armazenada e reutilizada em todas as requisições (edição, exclusão), garantindo que a regra de 5 minutos não seja aplicada.
  * Versão 1.6: Corrigido o erro de login. A validação de senha agora é realizada pela API de backend, o que é mais seguro e garante o acesso correto ao painel de administração.
  * Versão 1.5: Corrigido o erro de permissão. O script agora utiliza a senha ofuscada para autenticar corretamente as ações do administrador, permitindo editar e excluir postagens a qualquer momento, sem o limite de 5 minutos.
- * Versão 1.4: Corrigido o erro Uncaught TypeError. Removida a lógica do formulário de postagem, que não pertence a esta página, e adicionada a lógica de login do painel de administração.
- * Versão 1.3: Adicionada a solução de quebra de texto (word-break: break-all;) para lidar com strings longas sem espaços no campo de descrição.
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script do painel de administração.');
 
     const API_URL = 'https://mural-de-postagens.vercel.app';
-    const obfuscatedKey1 = 'DVMQEQkNDQMREwkNDBIPEQ0QERIMDAQ=';
-    const obfuscatedKey2 = 'H0oGCRMQF0pGRxAXGAgQGgkVGhIVFkAG';
+    const obfuscatedKey1 = 'OGMyMjNmZjljM2MyNjc4MzJjMjZhYWNiMjEwMTQ2MDI=';
+    const obfuscatedKey2 = 'ZWNjMjlhYjNhNDZmOGZhODc2MWViZGVlOGExZTg1MGQ=';
     const obfuscatedAdminPassword = 'JFkpJF0lJF0pJFkpJFopJFkpJF4lJFopJF8lJFslJE0=';
 
-    function getSecureValue(obfuscated) {
-        const decoded = atob(obfuscated);
-        let result = '';
-        for (let i = 0; i < decoded.length; i++) {
-            result += String.fromCharCode(decoded.charCodeAt(i) ^ 77);
-        }
-        return result;
-    }
+    let adminPassword = null;
 
+    function getSecureValue(obfuscated) {
+        return atob(obfuscated);
+    }
+    
     const IMG_API_CONFIGS = [
         { name: 'ImgBB - eduk', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureValue(obfuscatedKey1) },
         { name: 'ImgBB - enova', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureValue(obfuscatedKey2) }
@@ -55,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_URL}/api/posts?admin_password=${password}`);
             if (response.ok) {
                 console.log('Login bem-sucedido!');
+                adminPassword = password;
                 loginModal.style.display = 'none';
                 adminPage.style.display = 'block';
                 fetchPosts();
@@ -104,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const author = document.getElementById('edit-author').value;
         const tags = document.getElementById('edit-tags').value;
         const photoDate = document.getElementById('edit-photo-date').value;
-        const adminPassword = getSecureValue(obfuscatedAdminPassword);
 
         const postData = {
             title,
@@ -144,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function deletePost(postId) {
-        const adminPassword = getSecureValue(obfuscatedAdminPassword);
         if (!confirm(`Tem certeza que deseja excluir a postagem ${postId}?`)) {
             return;
         }
