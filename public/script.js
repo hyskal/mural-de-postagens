@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 1.8: Correção crítica - Removida a classe MinimalLoader incompleta que causava erro de sintaxe e impedia o funcionamento das postagens e botão Nova Postagem. Mantidas as funções de loading existentes.
  * Versão 1.7: Reorganização da lógica de carregamento para uma solução minimalista. A classe 'hidden' foi removida do HTML e o controle de exibição do modal de carregamento é feito diretamente no JavaScript, garantindo que a barra de progresso seja sempre visível durante o processo de envio.
  * Versão 1.6: Implementada uma correção na lógica de upload de imagem para garantir que a barra de progresso seja exibida corretamente mesmo em caso de falha no envio. A barra de carregamento agora completa o progresso e exibe uma mensagem de erro, ao invés de desaparecer abruptamente.
  * Versão 1.5: Correção completa do seletor de cores - adicionada inicialização robusta, logs de depuração e captura correta da cor selecionada.
- * Versão 1.4: Implementada a ofuscação simples Base64 para as chaves das APIs de upload de imagem, resolvendo os erros de requisição 400.
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script.');
@@ -54,9 +54,51 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageInfoSpan = document.getElementById('page-info');
 
     const loadingModal = document.getElementById('loading-modal');
-    const loadingBarFill = document.querySelector('.loading-bar-fill');
-    const loadingPercent = document.getElementById('loading-percent');
-    const loadingStatus = document.getElementById('loading-status');
+
+    // Função para mostrar o loading
+    function showLoading() {
+        if (postForm) postForm.style.display = 'none';
+        if (loadingModal) loadingModal.style.display = 'block';
+        updateLoading(10, 'Preparando envio...');
+    }
+
+    // Função para atualizar o progresso do loading
+    function updateLoading(percent, message) {
+        const progressCircle = document.getElementById('progressCircle');
+        const progressText = document.getElementById('progressText');
+        const statusText = document.getElementById('statusText');
+        
+        if (progressCircle) {
+            const circumference = 2 * Math.PI * 54;
+            const offset = circumference - (percent / 100) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+        }
+        
+        if (progressText) {
+            progressText.textContent = Math.round(percent) + '%';
+        }
+        
+        if (statusText) {
+            statusText.textContent = message;
+        }
+        
+        // Atualizar indicadores de etapa
+        const steps = {
+            1: document.getElementById('step1'),
+            2: document.getElementById('step2'),
+            3: document.getElementById('step3')
+        };
+        
+        if (percent >= 30 && steps[1]) {
+            steps[1].classList.add('active');
+        }
+        if (percent >= 60 && steps[2]) {
+            steps[2].classList.add('active');
+        }
+        if (percent >= 90 && steps[3]) {
+            steps[3].classList.add('active');
+        }
+    }
 
     function initializeColorSelector() {
         console.log('🎨 Inicializando seletor de cores...');
@@ -158,28 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 50);
     }
-
-// Classe para gerenciar o loading minimalista
-class MinimalLoader {
-    constructor() {
-        this.progressCircle = document.getElementById('progressCircle');
-        this.progressText = document.getElementById('progressText');
-        this.statusText = document.getElementById('statusText');
-        this.substatusText = document.getElementById('substatusText');
-        this.uploadIcon = document.getElementById('uploadIcon');
-        this.successCheck = document.getElementById('successCheck');
-        this.container = loadingModal;
-        
-        this.steps = {
-            1: document.getElementById('step1'),
-            2: document.getElementById('step2'),
-            3: document.getElementById('step3')
-        };
-
-        this.circumference = 2 * Math.PI * 54;
-        if (this.progressCircle) {
-            this.progressCircle.style.strokeDasharray = this.circumference;
-            this.progressCircle.style.strokeDash
 
     async function uploadImage(imageFile) {
         if (!imageFile) {
