@@ -125,7 +125,7 @@ Para rodar o projeto no Termux:
 
 7. Rode o projeto localmente: `vercel dev`. O servidor irá iniciar e você poderá acessar o mural pelo navegador do seu celular, usando o endereço IP e a porta fornecidos no terminal.
 
-Instruções para Revisores:
+Instruções para Revisores nos changelogs:
 
  * Este bloco de comentários registra as modificações significativas do arquivo.
  * Cada nova modificação deve ser adicionada no topo da lista.
