@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 1.5: Correção completa do seletor de cores - adicionada inicialização robusta, logs de depuração e captura correta da cor selecionada.
  * Versão 1.4: Implementada a ofuscação simples Base64 para as chaves das APIs de upload de imagem, resolvendo os erros de requisição 400.
  * Versão 1.3: Adicionada solução de quebra de texto (word-break: break-all;) para lidar com strings longas sem espaços no campo de descrição.
  * Versão 1.2: Ofuscação da senha de administrador e das chaves das APIs de upload de imagem para maior segurança.
- * Versão 1.1: Implementação da validação de 300 caracteres para o campo de descrição no formulário e limite de exibição de 100 caracteres no mural.
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script.');
@@ -64,21 +64,99 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingPercent = document.getElementById('loading-percent');
     const loadingStatus = document.getElementById('loading-status');
 
-    // Seletor de cores
-    const colorSwatches = document.querySelectorAll('.color-selector .color-swatch');
+    // Função para inicializar o seletor de cores
+    function initializeColorSelector() {
+        console.log('🎨 Inicializando seletor de cores...');
+        
+        const colorSwatches = document.querySelectorAll('.color-selector .color-swatch');
+        console.log('🎨 Cores encontradas:', colorSwatches.length);
+
+        // Verifica se as cores foram encontradas
+        if (colorSwatches.length === 0) {
+            console.error('❌ Nenhuma cor encontrada! Verificando HTML...');
+            console.log('🔍 HTML do modal:', document.getElementById('new-post-modal')?.innerHTML);
+            return false;
+        }
+
+        // Adiciona event listeners para cada cor
+        colorSwatches.forEach((swatch, index) => {
+            console.log(`🎨 Configurando cor ${index + 1}:`, swatch.dataset.color);
+            
+            // Remove listeners antigos para evitar duplicação
+            swatch.replaceWith(swatch.cloneNode(true));
+        });
+
+        // Reseleciona as cores após a clonagem
+        const newColorSwatches = document.querySelectorAll('.color-selector .color-swatch');
+
+        newColorSwatches.forEach((swatch, index) => {
+            swatch.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🎨 Cor clicada:', swatch.dataset.color);
+                
+                // Remove a seleção de todas as cores
+                newColorSwatches.forEach(s => s.classList.remove('selected'));
+                
+                // Adiciona seleção na cor clicada
+                swatch.classList.add('selected');
+                
+                console.log('✅ Cor selecionada atualizada');
+            });
+
+            // Adiciona efeitos de hover
+            swatch.addEventListener('mouseenter', () => {
+                if (!swatch.classList.contains('selected')) {
+                    swatch.style.transform = 'scale(1.1)';
+                }
+            });
+
+            swatch.addEventListener('mouseleave', () => {
+                if (!swatch.classList.contains('selected')) {
+                    swatch.style.transform = 'scale(1)';
+                }
+            });
+        });
+
+        console.log('✅ Seletor de cores inicializado com sucesso!');
+        return true;
+    }
+
+    // Função para garantir que a primeira cor esteja selecionada
+    function ensureColorSelection() {
+        const selectedColor = document.querySelector('.color-swatch.selected');
+        if (!selectedColor) {
+            console.log('⚠️ Nenhuma cor selecionada, selecionando a primeira...');
+            const firstColor = document.querySelector('.color-swatch');
+            if (firstColor) {
+                firstColor.classList.add('selected');
+                console.log('✅ Primeira cor selecionada automaticamente');
+            }
+        }
+    }
 
     // Funções de manipulação dos modais
     if (openModalBtn) {
         openModalBtn.addEventListener('click', () => {
-            console.log('Botão "Nova Postagem" clicado. Exibindo modal.');
+            console.log('📝 Botão "Nova Postagem" clicado. Exibindo modal.');
             newPostModal.style.display = 'block';
             resetPostModal();
+            
+            // Aguarda um pouco para garantir que o DOM foi atualizado
+            setTimeout(() => {
+                const success = initializeColorSelector();
+                if (success) {
+                    ensureColorSelection();
+                } else {
+                    console.error('❌ Falha ao inicializar seletor de cores');
+                }
+            }, 150);
         });
     }
 
     if (closeModalBtn) {
         closeModalBtn.addEventListener('click', () => {
-            console.log('Botão de fechar modal clicado. Ocultando modal.');
+            console.log('❌ Botão de fechar modal clicado. Ocultando modal.');
             newPostModal.style.display = 'none';
             postForm.reset();
         });
@@ -86,19 +164,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (closeEnlargedImageBtn) {
         closeEnlargedImageBtn.addEventListener('click', () => {
-            console.log('Botão de fechar imagem ampliada clicado. Ocultando modal.');
+            console.log('❌ Botão de fechar imagem ampliada clicado. Ocultando modal.');
             enlargedImageModal.style.display = 'none';
         });
     }
 
     window.addEventListener('click', (event) => {
         if (event.target === newPostModal) {
-            console.log('Clique fora do modal de postagem. Ocultando modal.');
+            console.log('❌ Clique fora do modal de postagem. Ocultando modal.');
             newPostModal.style.display = 'none';
             postForm.reset();
         }
         if (event.target === enlargedImageModal) {
-            console.log('Clique fora do modal de imagem ampliada. Ocultando modal.');
+            console.log('❌ Clique fora do modal de imagem ampliada. Ocultando modal.');
             enlargedImageModal.style.display = 'none';
         }
     });
@@ -112,6 +190,16 @@ document.addEventListener('DOMContentLoaded', () => {
         postForm.style.display = 'block';
         loadingModal.classList.add('hidden');
         postForm.reset();
+        
+        // Reset color selection
+        setTimeout(() => {
+            const colorSwatches = document.querySelectorAll('.color-selector .color-swatch');
+            colorSwatches.forEach(swatch => swatch.classList.remove('selected'));
+            const firstColor = document.querySelector('.color-selector .color-swatch');
+            if (firstColor) {
+                firstColor.classList.add('selected');
+            }
+        }, 50);
     }
 
     // Funções do loading modal
@@ -276,14 +364,30 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('post-image').required = false;
         document.getElementById('image-info').style.display = 'block';
 
-        colorSwatches.forEach(swatch => {
-            swatch.classList.remove('selected');
-            if (swatch.dataset.color === post.color) {
-                swatch.classList.add('selected');
-            }
-        });
-
         newPostModal.style.display = 'block';
+
+        // Aguarda um pouco e então configura a cor
+        setTimeout(() => {
+            const success = initializeColorSelector();
+            if (success) {
+                const colorSwatches = document.querySelectorAll('.color-selector .color-swatch');
+                colorSwatches.forEach(swatch => {
+                    swatch.classList.remove('selected');
+                    if (swatch.dataset.color === post.color) {
+                        swatch.classList.add('selected');
+                        console.log('🎨 Cor da postagem restaurada:', post.color);
+                    }
+                });
+                
+                // Se nenhuma cor foi selecionada, seleciona a primeira
+                if (!document.querySelector('.color-swatch.selected')) {
+                    const firstColor = document.querySelector('.color-swatch');
+                    if (firstColor) {
+                        firstColor.classList.add('selected');
+                    }
+                }
+            }
+        }, 150);
     }
 
     // Função para carregar as postagens da nova API
@@ -330,10 +434,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Eventos de pesquisa, ordenação e paginação
-    searchBtn.addEventListener('click', () => {
-        currentPage = 1;
-        fetchPosts();
-    });
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            currentPage = 1;
+            fetchPosts();
+        });
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                currentPage = 1;
+                fetchPosts();
+            }
+        });
+    }
+    
     sortBySelect.addEventListener('change', () => {
         currentPage = 1;
         fetchPosts();
@@ -355,14 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Evento de seleção de cor
-    colorSwatches.forEach(swatch => {
-        swatch.addEventListener('click', () => {
-            colorSwatches.forEach(s => s.classList.remove('selected'));
-            swatch.classList.add('selected');
-        });
-    });
-
     // Evento de envio do formulário
     if (postForm) {
         postForm.addEventListener('submit', async (event) => {
@@ -375,7 +483,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const photoDate = document.getElementById('photo-date').value;
             const tags = document.getElementById('post-tags').value;
             const imageFile = document.getElementById('post-image').files[0];
-            const selectedColor = document.querySelector('.color-swatch.selected').dataset.color;
+            
+            // CAPTURA DA COR SELECIONADA - VERSÃO CORRIGIDA
+            let selectedColor = 'rgba(255, 255, 255, 0.8)'; // cor padrão
+            const selectedColorElement = document.querySelector('.color-swatch.selected');
+            
+            if (selectedColorElement && selectedColorElement.dataset.color) {
+                selectedColor = selectedColorElement.dataset.color;
+                console.log('🎨 Cor selecionada para envio:', selectedColor);
+            } else {
+                console.warn('⚠️ Nenhuma cor selecionada, usando padrão:', selectedColor);
+                // Tenta selecionar a primeira cor como fallback
+                const firstColor = document.querySelector('.color-swatch');
+                if (firstColor) {
+                    selectedColor = firstColor.dataset.color;
+                    console.log('🎨 Usando primeira cor como fallback:', selectedColor);
+                }
+            }
 
             if (!title || !description || !author || !photoDate) {
                 console.warn('Alguns campos do formulário estão vazios.');
@@ -420,6 +544,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 tags,
                 color: selectedColor
             };
+            
+            console.log('📤 Dados da postagem para envio:', postData);
             
             const method = postId ? 'PUT' : 'POST';
             const endpoint = postId ? `${API_URL}/api/posts?id=${postId}` : `${API_URL}/api/posts`;
@@ -494,5 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
         enlargedImageModal.style.display = 'block';
     };
 
+    // Inicialização
+    console.log('🚀 Script inicializado. Carregando postagens...');
     fetchPosts();
 });
