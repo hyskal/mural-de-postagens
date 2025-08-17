@@ -11,32 +11,108 @@
     <style>
         .admin-container {
             width: 100%;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 20px auto;
             padding: 20px;
         }
         h1 {
             text-align: center;
         }
+        .admin-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .bulk-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .export-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .bulk-delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+        }
+        .bulk-delete-btn:hover {
+            background-color: #c0392b;
+        }
+        .export-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .export-btn:hover {
+            background-color: #229954;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            font-size: 14px;
         }
         th, td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
+            vertical-align: middle;
         }
         th {
             background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .checkbox-column {
+            width: 40px;
+            text-align: center;
+        }
+        .author-column {
+            width: 120px;
+        }
+        .image-column {
+            width: 200px;
+        }
+        .date-column {
+            width: 100px;
+        }
+        .actions-column {
+            width: 120px;
+        }
+        .image-link {
+            color: #3498db;
+            text-decoration: none;
+            font-size: 12px;
+            word-break: break-all;
+            display: block;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .image-link:hover {
+            text-decoration: underline;
         }
         .admin-buttons button {
             margin-right: 5px;
-            padding: 5px 10px;
+            padding: 4px 8px;
             border: none;
             cursor: pointer;
-            border-radius: 5px;
+            border-radius: 3px;
+            font-size: 12px;
         }
         .edit-btn {
             background-color: #2c3e50;
@@ -86,6 +162,25 @@
             padding: 10px;
             margin: 10px 0;
         }
+        .selected-count {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        @media (max-width: 768px) {
+            .admin-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .bulk-actions, .export-actions {
+                justify-content: center;
+            }
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 6px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -105,15 +200,28 @@
         </header>
 
         <div class="admin-container">
+            <div class="admin-toolbar">
+                <div class="bulk-actions">
+                    <button id="bulk-delete-btn" class="bulk-delete-btn">
+                        Excluir Selecionadas (<span class="selected-count">0</span>)
+                    </button>
+                </div>
+                <div class="export-actions">
+                    <button id="export-csv-btn" class="export-btn">📊 Exportar CSV</button>
+                </div>
+            </div>
+            
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Título</th>
-                        <th>Autor</th>
-                        <th>Data da Postagem</th>
-                        <th>Data da Foto</th>
-                        <th>Ações</th>
+                        <th class="checkbox-column">
+                            <input type="checkbox" id="select-all-checkbox" title="Selecionar todas">
+                        </th>
+                        <th class="author-column">Autor</th>
+                        <th class="image-column">Link da Foto</th>
+                        <th class="date-column">Data da Postagem</th>
+                        <th class="date-column">Data da Foto</th>
+                        <th class="actions-column">Ações</th>
                     </tr>
                 </thead>
                 <tbody id="posts-table-body">
