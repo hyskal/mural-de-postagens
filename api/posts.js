@@ -14,11 +14,10 @@
  */
 const { Pool } = require('pg');
 
-// ====== FORCE DEPLOYMENT MARKER ======
-const DEPLOYMENT_VERSION = "1.7.0";
-const DEPLOYMENT_TIME = new Date().toISOString();
-console.log(`🚀 API POSTS.JS VERSÃO ${DEPLOYMENT_VERSION} CARREGADA EM: ${DEPLOYMENT_TIME}`);
-// =====================================
+// ====== DEPLOYMENT INFO ======
+const DEPLOYMENT_VERSION = "1.8.0";
+console.log(`🚀 API POSTS.JS VERSÃO ${DEPLOYMENT_VERSION} ATIVA`);
+// =============================
 
 const pool = new Pool({
     connectionString: process.env.NEON_CONNECTION_STRING,
@@ -35,65 +34,49 @@ function getSecurePassword() {
     return result;
 }
 
-// Função definitiva para validar senha de administrador
+// Função para validar senha de administrador
 function isValidAdminPassword(providedPassword) {
-    console.log(`🔐 Validando senha admin - Versão ${DEPLOYMENT_VERSION}`);
-    console.log('📥 Senha recebida:', providedPassword);
-    
     if (!providedPassword) {
-        console.log('❌ Senha não fornecida');
+        console.log('❌ Tentativa de acesso admin sem senha');
         return false;
     }
     
-    // CORREÇÃO TEMPORÁRIA: Aceitar diretamente "muralunlock"
+    // Senha esperada (hardcoded temporariamente para estabilidade)
     const correctPassword = 'muralunlock';
-    const expectedPassword = getSecurePassword();
     
-    console.log('🔑 Senha correta hardcoded:', correctPassword);
-    console.log('🔑 Senha da função ofuscada:', expectedPassword);
-    
-    // Primeira tentativa: decodificação de URL
+    // Tentar decodificar URL se necessário
     let decodedPassword;
     try {
         decodedPassword = decodeURIComponent(providedPassword);
-        console.log('✅ Senha decodificada da URL:', decodedPassword);
     } catch (error) {
-        console.log('⚠️ Erro na decodificação, usando senha original');
         decodedPassword = providedPassword;
     }
     
-    // Múltiplas tentativas de comparação
-    const tests = [
-        { name: 'Decodificada vs Hardcoded', result: decodedPassword === correctPassword },
-        { name: 'Original vs Hardcoded', result: providedPassword === correctPassword },
-        { name: 'Decodificada vs Ofuscada', result: decodedPassword === expectedPassword },
-        { name: 'Original vs Ofuscada', result: providedPassword === expectedPassword }
-    ];
+    // Validar senha
+    const isValid = decodedPassword === correctPassword || providedPassword === correctPassword;
     
-    tests.forEach(test => {
-        console.log(`🔍 ${test.name}: ${test.result}`);
-    });
+    if (isValid) {
+        console.log('✅ Acesso de administrador autorizado');
+    } else {
+        console.log('❌ Tentativa de acesso admin com credenciais inválidas');
+    }
     
-    const finalResult = tests.some(test => test.result);
-    console.log('✅ Resultado final:', finalResult);
-    
-    return finalResult;
+    return isValid;
 }
 
 export default async function handler(request, response) {
     try {
         const client = await pool.connect();
         
-        // ===== ENDPOINT DE TESTE PARA VERIFICAR DEPLOYMENT =====
-        if (request.method === 'GET' && request.query.test_deployment) {
-            console.log('🧪 Endpoint de teste chamado');
+        // ===== ENDPOINT DE STATUS =====
+        if (request.method === 'GET' && request.query.status) {
             return response.status(200).json({ 
                 version: DEPLOYMENT_VERSION,
-                deploymentTime: DEPLOYMENT_TIME,
-                message: 'Nova versão está ativa!'
+                status: 'active',
+                message: 'API funcionando normalmente'
             });
         }
-        // ======================================================
+        // ==============================
         
         if (request.method === 'GET') {
             const { searchTerm = '', sortBy = 'created_at', sortOrder = 'desc', limit = 20, page = 1 } = request.query;
@@ -150,9 +133,8 @@ export default async function handler(request, response) {
             const { title, image_url, description, author, photo_date, tags, color } = request.body;
             const adminPassword = request.query.admin_password;
 
-            // USAR A FUNÇÃO CORRIGIDA
+            // Verificar permissões de administrador
             if (!isValidAdminPassword(adminPassword)) {
-                console.log('❌ Admin inválido - aplicando regra de 5 minutos');
                 const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
                 if (postCheck.rowCount === 0) {
                     return response.status(404).json({ message: 'Postagem não encontrada.' });
@@ -163,8 +145,6 @@ export default async function handler(request, response) {
                 if (createdTime < fiveMinutesAgo) {
                     return response.status(403).json({ message: 'Não é possível editar esta postagem. O limite de 5 minutos foi excedido.' });
                 }
-            } else {
-                console.log('✅ Admin válido - ignorando limite de tempo');
             }
             
             const query = `
@@ -187,9 +167,8 @@ export default async function handler(request, response) {
             const { id } = request.query;
             const adminPassword = request.query.admin_password;
             
-            // USAR A FUNÇÃO CORRIGIDA
+            // Verificar permissões de administrador
             if (!isValidAdminPassword(adminPassword)) {
-                console.log('❌ Admin inválido - aplicando regra de 5 minutos');
                 const postCheck = await client.query('SELECT created_at FROM memorial_schema.memorial WHERE id = $1', [id]);
                 if (postCheck.rowCount === 0) {
                     return response.status(404).json({ message: 'Postagem não encontrada.' });
@@ -200,8 +179,6 @@ export default async function handler(request, response) {
                 if (createdTime < fiveMinutesAgo) {
                     return response.status(403).json({ message: 'Não é possível excluir esta postagem. O limite de 5 minutos foi excedido.' });
                 }
-            } else {
-                console.log('✅ Admin válido - ignorando limite de tempo');
             }
 
             const query = 'DELETE FROM memorial_schema.memorial WHERE id = $1';
