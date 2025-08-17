@@ -38,27 +38,46 @@ function getSecurePassword() {
 // Função definitiva para validar senha de administrador
 function isValidAdminPassword(providedPassword) {
     console.log(`🔐 Validando senha admin - Versão ${DEPLOYMENT_VERSION}`);
+    console.log('📥 Senha recebida:', providedPassword);
     
     if (!providedPassword) {
         console.log('❌ Senha não fornecida');
         return false;
     }
     
+    // CORREÇÃO TEMPORÁRIA: Aceitar diretamente "muralunlock"
+    const correctPassword = 'muralunlock';
     const expectedPassword = getSecurePassword();
     
+    console.log('🔑 Senha correta hardcoded:', correctPassword);
+    console.log('🔑 Senha da função ofuscada:', expectedPassword);
+    
     // Primeira tentativa: decodificação de URL
+    let decodedPassword;
     try {
-        const decodedPassword = decodeURIComponent(providedPassword);
-        console.log('✅ Senha decodificada com sucesso');
-        const match = decodedPassword === expectedPassword;
-        console.log('🔍 Resultado da comparação:', match);
-        return match;
+        decodedPassword = decodeURIComponent(providedPassword);
+        console.log('✅ Senha decodificada da URL:', decodedPassword);
     } catch (error) {
-        console.log('⚠️ Erro na decodificação, tentando comparação direta');
-        const directMatch = providedPassword === expectedPassword;
-        console.log('🔍 Comparação direta:', directMatch);
-        return directMatch;
+        console.log('⚠️ Erro na decodificação, usando senha original');
+        decodedPassword = providedPassword;
     }
+    
+    // Múltiplas tentativas de comparação
+    const tests = [
+        { name: 'Decodificada vs Hardcoded', result: decodedPassword === correctPassword },
+        { name: 'Original vs Hardcoded', result: providedPassword === correctPassword },
+        { name: 'Decodificada vs Ofuscada', result: decodedPassword === expectedPassword },
+        { name: 'Original vs Ofuscada', result: providedPassword === expectedPassword }
+    ];
+    
+    tests.forEach(test => {
+        console.log(`🔍 ${test.name}: ${test.result}`);
+    });
+    
+    const finalResult = tests.some(test => test.result);
+    console.log('✅ Resultado final:', finalResult);
+    
+    return finalResult;
 }
 
 export default async function handler(request, response) {
