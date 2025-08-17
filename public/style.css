@@ -497,6 +497,9 @@ footer p {
 
 /* Estilos para o container do tema de cores */
 .color-theme-container {
+    display: flex; /* Alinha o label e os swatches horizontalmente */
+    align-items: center; /* Centraliza verticalmente os itens */
+    gap: 15px; /* Adiciona um espaço entre o label e os swatches */
     margin-bottom: 20px;
     padding: 15px;
     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -505,9 +508,9 @@ footer p {
 }
 
 .color-theme-container label {
-    display: block !important;
+    display: inline-block; /* Permite que o label fique na mesma linha */
     font-weight: 600;
-    margin-bottom: 10px !important;
+    margin-bottom: 0 !important; /* Remove o espaçamento inferior */
     color: #333;
     font-size: 14px;
     width: auto !important;
@@ -516,7 +519,7 @@ footer p {
 /* Container das cores */
 .color-selector {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-start;
@@ -524,8 +527,8 @@ footer p {
 
 /* Estilos individuais das cores */
 .color-swatch {
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     cursor: pointer;
     border: 3px solid transparent;
@@ -533,7 +536,6 @@ footer p {
     position: relative;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     flex-shrink: 0;
-    display: block !important;
 }
 
 .color-swatch:hover {
