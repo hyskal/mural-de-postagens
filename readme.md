@@ -124,3 +124,10 @@ Para rodar o projeto no Termux:
 6. Instale o **Vercel CLI** globalmente: `npm i -g vercel`.
 
 7. Rode o projeto localmente: `vercel dev`. O servidor irá iniciar e você poderá acessar o mural pelo navegador do seu celular, usando o endereço IP e a porta fornecidos no terminal.
+
+Instruções para Revisores:
+
+ * Este bloco de comentários registra as modificações significativas do arquivo.
+ * Cada nova modificação deve ser adicionada no topo da lista.
+ * Use o formato "Versão [número]: [Descrição da modificação]".
+ * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
