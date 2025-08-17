@@ -272,4 +272,212 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             console.error('Erro na exportação CSV:', error);
-            alert('Erro ao
+            alert('Erro ao exportar CSV. Tente novamente.');
+        }
+    }
+
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', exportToCSV);
+    }
+    // ===============================================
+
+    // Função de login (inalterada)
+    loginBtn.addEventListener('click', async () => {
+        const password = passwordInput.value;
+        const decodedPassword = getAdminPassword();
+
+        try {
+            const response = await fetch(`${API_URL}/api/posts?admin_password=${decodedPassword}`);
+            if (response.ok) {
+                console.log('Login bem-sucedido!');
+                loginModal.style.display = 'none';
+                adminPage.style.display = 'block';
+                fetchPosts();
+            } else {
+                alert('Senha incorreta!');
+            }
+        } catch (error) {
+            console.error('Erro ao verificar senha:', error);
+            alert('Erro ao tentar fazer login. Tente novamente.');
+        }
+    });
+
+    // Função de logout
+    logoutBtn.addEventListener('click', () => {
+        location.reload();
+    });
+
+    // Funções de manipulação do modal de edição
+    closeEditModalBtn.addEventListener('click', () => {
+        editPostModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target === editPostModal) {
+            editPostModal.style.display = 'none';
+        }
+    });
+
+    function openEditModal(post) {
+        document.getElementById('edit-post-id').value = post.id;
+        document.getElementById('edit-title').value = post.title;
+        document.getElementById('edit-image-url').value = post.image_url;
+        document.getElementById('edit-description').value = post.description;
+        document.getElementById('edit-author').value = post.author;
+        document.getElementById('edit-tags').value = post.tags;
+        document.getElementById('edit-created-at').value = new Date(post.created_at).toLocaleString();
+        document.getElementById('edit-photo-date').value = post.photo_date.split('T')[0];
+        editPostModal.style.display = 'block';
+    }
+
+    // NOVA FUNÇÃO DE EDIÇÃO COM CONFIRMAÇÃO DE SENHA
+    async function submitEditForm(event) {
+        event.preventDefault();
+        
+        try {
+            // Solicitar confirmação de senha
+            const adminPassword = await showPasswordConfirm();
+            
+            const postId = document.getElementById('edit-post-id').value;
+            const title = document.getElementById('edit-title').value;
+            const imageUrl = document.getElementById('edit-image-url').value;
+            const description = document.getElementById('edit-description').value;
+            const author = document.getElementById('edit-author').value;
+            const tags = document.getElementById('edit-tags').value;
+            const photoDate = document.getElementById('edit-photo-date').value;
+
+            const postData = {
+                title,
+                image_url: imageUrl,
+                description,
+                author,
+                photo_date: photoDate,
+                tags,
+                color: ''
+            };
+
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${encodeURIComponent(adminPassword)}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(postData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Erro ao atualizar a postagem.');
+            }
+
+            alert('Postagem atualizada com sucesso!');
+            editPostModal.style.display = 'none';
+            fetchPosts();
+            
+        } catch (error) {
+            if (error.message !== 'Operação cancelada pelo usuário') {
+                console.error('Erro ao atualizar postagem:', error);
+                alert(error.message);
+            }
+        }
+    }
+
+    if (editPostForm) {
+        editPostForm.addEventListener('submit', submitEditForm);
+    }
+
+    // NOVA FUNÇÃO DE EXCLUSÃO COM CONFIRMAÇÃO DE SENHA
+    async function deletePost(postId) {
+        if (!confirm(`Tem certeza que deseja excluir a postagem ${postId}?`)) {
+            return;
+        }
+
+        try {
+            // Solicitar confirmação de senha
+            const adminPassword = await showPasswordConfirm();
+
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}&admin_password=${encodeURIComponent(adminPassword)}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Erro ao excluir a postagem.');
+            }
+
+            alert('Postagem excluída com sucesso!');
+            fetchPosts();
+            
+        } catch (error) {
+            if (error.message !== 'Operação cancelada pelo usuário') {
+                console.error('Erro ao excluir postagem:', error);
+                alert(error.message);
+            }
+        }
+    }
+
+    // Função para formatar data no formato brasileiro
+    function formatDateToBR(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('pt-BR');
+    }
+
+    // Função para truncar URL longa
+    function truncateUrl(url, maxLength = 30) {
+        if (!url) return 'N/A';
+        if (url.length <= maxLength) return url;
+        return url.substring(0, maxLength) + '...';
+    }
+
+    // Carregar postagens e popular a tabela (ATUALIZADA)
+    async function fetchPosts() {
+        try {
+            const response = await fetch(`${API_URL}/api/posts?limit=${postsPerPage}&page=${currentPage}`);
+            if (!response.ok) {
+                throw new Error('Erro ao buscar postagens da API');
+            }
+            const data = await response.json();
+            const posts = data.posts;
+            allPosts = posts; // Armazenar para referência
+            
+            postsTableBody.innerHTML = '';
+            
+            posts.forEach(post => {
+                const row = postsTableBody.insertRow();
+                row.innerHTML = `
+                    <td class="checkbox-column">
+                        <input type="checkbox" class="post-checkbox" value="${post.id}">
+                    </td>
+                    <td class="author-column">${post.author || 'N/A'}</td>
+                    <td class="image-column">
+                        <a href="${post.image_url}" target="_blank" class="image-link" title="${post.image_url}">
+                            ${truncateUrl(post.image_url)}
+                        </a>
+                    </td>
+                    <td class="date-column">${formatDateToBR(post.created_at)}</td>
+                    <td class="date-column">${formatDateToBR(post.photo_date)}</td>
+                    <td class="admin-buttons">
+                        <button class="edit-btn" data-id="${post.id}">Editar</button>
+                        <button class="delete-btn" data-id="${post.id}">Excluir</button>
+                    </td>
+                `;
+                
+                // Adicionar event listeners
+                const checkbox = row.querySelector('.post-checkbox');
+                checkbox.addEventListener('change', handleIndividualCheckbox);
+                
+                row.querySelector('.edit-btn').addEventListener('click', () => openEditModal(post));
+                row.querySelector('.delete-btn').addEventListener('click', () => deletePost(post.id));
+            });
+            
+            // Resetar estados de seleção
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+            updateBulkDeleteButton();
+            
+        } catch (error) {
+            console.error('Erro ao buscar postagens:', error);
+            alert('Erro ao buscar postagens. Verifique sua conexão ou a API.');
+        }
+    }
+});
