@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 1.6: Implementada uma correção na lógica de upload de imagem para garantir que a barra de progresso seja exibida corretamente mesmo em caso de falha no envio. A barra de carregamento agora completa o progresso e exibe uma mensagem de erro, ao invés de desaparecer abruptamente.
  * Versão 1.5: Correção completa do seletor de cores - adicionada inicialização robusta, logs de depuração e captura correta da cor selecionada.
  * Versão 1.4: Implementada a ofuscação simples Base64 para as chaves das APIs de upload de imagem, resolvendo os erros de requisição 400.
  * Versão 1.3: Adicionada solução de quebra de texto (word-break: break-all;) para lidar com strings longas sem espaços no campo de descrição.
- * Versão 1.2: Ofuscação da senha de administrador e das chaves das APIs de upload de imagem para maior segurança.
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script.');
@@ -263,9 +263,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 continue;
             }
         }
-
+        
+        // Se todas as APIs falharem, atualiza o status de carregamento antes de retornar null
+        updateLoading(100, 'Falha no upload da imagem.');
         console.error('Todas as chaves de API falharam no upload.');
-        alert('Erro ao enviar a imagem. Por favor, tente novamente.');
         return null;
     }
     
@@ -529,6 +530,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (imageFile) {
                 imageUrl = await uploadImage(imageFile);
                 if (!imageUrl) {
+                    // Após a falha do upload, a função já atualiza o loading bar e retorna.
+                    // Apenas alertamos o usuário e saímos.
+                    alert('Erro ao enviar a imagem. Por favor, tente novamente.');
                     loadingModal.classList.add('hidden');
                     postForm.style.display = 'block';
                     return;
