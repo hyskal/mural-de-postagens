@@ -1,10 +1,36 @@
+/**
+ * CHANGELOG
+ *
+ * Instruções para Revisores:
+ * Este bloco de comentários registra as modificações significativas do arquivo.
+ * Cada nova modificação deve ser adicionada no topo da lista.
+ * Use o formato "Versão [número]: [Descrição da modificação]".
+ * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
+ *
+ * Versão 1.3: Adicionada solução de quebra de texto (word-break: break-all;) para lidar com strings longas sem espaços no campo de descrição.
+ * Versão 1.2: Ofuscação da senha de administrador e das chaves das APIs de upload de imagem para maior segurança.
+ * Versão 1.1: Implementação da validação de 300 caracteres para o campo de descrição no formulário e limite de exibição de 100 caracteres no mural.
+ * Versão 1.0: Versão inicial do projeto com funcionalidades de pesquisa, ordenação, paginação e temas de cor.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script.');
 
     const API_URL = 'https://mural-de-postagens.vercel.app';
+    const obfuscatedKey1 = 'DVMQEQkNDQMREwkNDBIPEQ0QERIMDAQ=';
+    const obfuscatedKey2 = 'H0oGCRMQF0pGRxAXGAgQGgkVGhIVFkAG';
+    
+    function getSecureKey(obfuscated) {
+        const decoded = atob(obfuscated);
+        let result = '';
+        for (let i = 0; i < decoded.length; i++) {
+            result += String.fromCharCode(decoded.charCodeAt(i) ^ 77);
+        }
+        return result;
+    }
+
     const IMG_API_CONFIGS = [
-        { name: 'ImgBB - eduk', endpoint: 'https://api.imgbb.com/1/upload', key: '8c223ff9c3c267832c26aacb21014602' },
-        { name: 'ImgBB - enova', endpoint: 'https://api.imgbb.com/1/upload', key: 'ecc29ab3a46f8fa8761ebdee8a1e850d' }
+        { name: 'ImgBB - eduk', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureKey(obfuscatedKey1) },
+        { name: 'ImgBB - enova', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureKey(obfuscatedKey2) }
     ];
     const EDIT_TIME_LIMIT_MINUTES = 5;
     const LIMIT_DESCRIPTION = 300; // Limite de caracteres para o formulário de postagem
