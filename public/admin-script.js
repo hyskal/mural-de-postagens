@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_URL = 'https://mural-de-postagens.vercel.app';
     const obfuscatedKey1 = 'OGMyMjNmZjljM2MyNjc4MzJjMjZhYWNiMjEwMTQ2MDI=';
     const obfuscatedKey2 = 'ZWNjMjlhYjNhNDZmOGZhODc2MWViZGVlOGExZTg1MGQ=';
-    const obfuscatedAdminPassword = 'JFkpJF0lJF0pJFkpJFopJFkpJF4lJFopJF8lJFslJE0=';
+    const obfuscatedAdminPassword = 'JCFzYCFsYSFzYCFsJCFvYCFjYCFrJCE=';
 
     // Variável para armazenar a senha decodificada após login bem-sucedido
     let validatedAdminPassword = null;
