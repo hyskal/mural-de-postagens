@@ -2,7 +2,94 @@
 
 Este projeto é um mural de postagens construído com uma arquitetura moderna e gratuita, agora com funcionalidades aprimoradas. A aplicação utiliza um **front-end** estático em HTML, CSS e JavaScript, uma **API de back-end** serverless para comunicação e um banco de dados **PostgreSQL** para persistência dos dados.
 
+## 🔧 **Estrutura do Projeto**
+
+```
+mural-postagens/
+├── public/
+│   ├── index.html          # Estrutura HTML limpa
+│   ├── style.css          # Estilos organizados e otimizados  
+│   └── script.js          # JavaScript modular e limpo
+├── api/
+│   └── posts.js           # Endpoints da API REST
+├── README.md              # Documentação completa
+└── package.json           # Dependências e scripts
+```
+
 * **Novas Funcionalidades**: O projeto agora suporta pesquisa de postagens por título, autor e tags, ordenação por diferentes critérios (data de postagem, data da foto, título e autor), paginação de 10 posts por página no mural principal e 20 na página de administração, e um tema de cores personalizável para cada postagem. Uma página de administração protegida por senha permite editar e excluir postagens sem limite de tempo.
+
+* ## 🚀 **Principais Funcionalidades**
+
+### 🔲 **Sistema de Grid Responsivo**
+- **Desktop (1200px+):** 4 colunas compactas
+- **Tablet (768-1199px):** 3 colunas adaptáveis  
+- **Mobile (até 767px):** 2 colunas otimizadas
+- **Layout fluido** que se adapta automaticamente ao dispositivo
+
+### 📱 **Cards Expansíveis Inteligentes**
+- **Visualização compacta** com informações essenciais
+- **Clique para expandir** em modal overlay centralizado
+- **Indicador visual "+"** para mostrar conteúdo adicional
+- **Botão "×"** para fechar facilmente
+- **Transições suaves** e animações modernas
+
+### 🔍 **Sistema de Interações Avançadas**
+- **Tecla ESC** para fechar cards expandidos
+- **Swipe down** (mobile) para fechar rapidamente
+- **Tags clicáveis** no modo expandido para busca
+- **Clique na imagem** para ampliar em tela cheia
+- **Hover effects** responsivos e intuitivos
+
+### 📝 **Criação e Edição de Posts**
+- **Formulário intuitivo** com validação em tempo real
+- **Upload múltiplo de imagem** com APIs redundantes
+- **Seletor de cores** para personalização
+- **Limite de caracteres** com contador visual
+- **Edição/exclusão** com limite de tempo (5 minutos)
+
+### ⚡ **Sistema de Loading Moderno**
+- **Círculo de progresso animado** com percentual
+- **Indicadores de etapa** visuais
+- **Mensagens de status** em tempo real
+- **Animação de sucesso** com feedback visual
+- **Tratamento de erros** com retry automático
+
+### 🔎 **Busca e Filtros Inteligentes**
+- **Busca em tempo real** com debounce
+- **Filtros por data, título e autor**
+- **Busca por tags** específicas
+- **Ordenação** crescente/decrescente
+- **Paginação** com controles intuitivos
+
+## ⚙️ **Configurações Avançadas**
+
+### **Limites Configuráveis**
+```javascript
+const EDIT_TIME_LIMIT_MINUTES = 5;    // Tempo para edição
+const LIMIT_DESCRIPTION = 300;        // Máximo na descrição
+const DISPLAY_LIMIT_DESCRIPTION = 100; // Truncar na visualização
+const LIMIT_TITLE = 120;               // Máximo no título
+const postsPerPage = 20;               // Posts por página
+```
+
+### **APIs de Upload**
+```javascript
+const IMG_API_CONFIGS = [
+    { name: 'ImgBB - Primary', endpoint: 'https://api.imgbb.com/1/upload' },
+    { name: 'ImgBB - Backup', endpoint: 'https://api.imgbb.com/1/upload' }
+];
+```
+
+### **Temas de Cores**
+```css
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --background-gradient: linear-gradient(135deg, #e3f2fd, #c3e3f3);
+    --glass-background: rgba(255, 255, 255, 0.6);
+}
+```
+
 
 * **Front-end**: A interface do usuário é composta por arquivos estáticos hospedados no Vercel (ou GitHub Pages). A lógica do `script.js` e `admin-script.js` foi atualizada para interagir com a API, suportando todas as novas funcionalidades e incluindo uma barra de carregamento para a submissão de posts. A formatação de datas de exibição foi alterada para `dd-mm-aaaa`.
 
