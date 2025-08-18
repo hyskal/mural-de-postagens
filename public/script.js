@@ -7,14 +7,15 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 2.1: Código JavaScript completamente reorganizado - removidos duplicados, lógica otimizada, sistema de cards expansíveis funcionando perfeitamente.
  * Versão 2.0: Implementado sistema completo de cards expansíveis - cards compactos no grid que expandem em modal overlay com todas as informações, suporte a 4 colunas no desktop e 2 no mobile.
  * Versão 1.9: Sistema de loading completamente renovado - implementado design moderno com círculo de progresso animado, indicadores de etapa, animações suaves e feedback visual aprimorado durante todo o processo de envio.
  * Versão 1.8: Correção crítica - Removida a classe MinimalLoader incompleta que causava erro de sintaxe e impedia o funcionamento das postagens e botão Nova Postagem. Mantidas as funções de loading existentes.
- * Versão 1.7: Reorganização da lógica de carregamento para uma solução minimalista. A classe 'hidden' foi removida do HTML e o controle de exibição do modal de carregamento é feito diretamente no JavaScript, garantindo que a barra de progresso seja sempre visível durante o processo de envio.
  */
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM completamente carregado e analisado. Iniciando a lógica do script.');
+    console.log('🚀 DOM carregado - Iniciando aplicação do Mural de Postagens...');
 
+    // ===== CONFIGURAÇÕES E CONSTANTES =====
     const API_URL = 'https://mural-de-postagens.vercel.app';
     const obfuscatedKey1 = 'OGMyMjNmZjljM2MyNjc4MzJjMjZhYWNiMjEwMTQ2MDI=';
     const obfuscatedKey2 = 'ZWNjMjlhYjNhNDZmOGZhODc2MWViZGVlOGExZTg1MGQ=';
@@ -27,149 +28,146 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: 'ImgBB - eduk', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureValue(obfuscatedKey1) },
         { name: 'ImgBB - enova', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureValue(obfuscatedKey2) }
     ];
+    
     const EDIT_TIME_LIMIT_MINUTES = 5;
     const LIMIT_DESCRIPTION = 300;
     const DISPLAY_LIMIT_DESCRIPTION = 100;
     const LIMIT_TITLE = 120;
 
+    // ===== VARIÁVEIS GLOBAIS =====
     let currentPage = 1;
-    const postsPerPage = 20; // Aumentado para acomodar mais cards
+    const postsPerPage = 20;
     let totalPosts = 0;
-    let expandedCard = null; // Controle do card expandido
+    let expandedCard = null;
+    let searchTimeout;
+    let touchStartY = 0;
+    let touchEndY = 0;
 
-    const openModalBtn = document.getElementById('open-post-modal');
-    const newPostModal = document.getElementById('new-post-modal');
-    const closeModalBtn = document.getElementById('close-post-modal');
-    const postForm = document.getElementById('post-form');
-    const muralContainer = document.getElementById('mural-container');
-    const enlargedImageModal = document.getElementById('enlarged-image-modal');
-    const enlargedImage = document.getElementById('enlarged-image');
-    const closeEnlargedImageBtn = document.getElementById('close-enlarged-image-modal');
-    
-    const searchInput = document.getElementById('search-input');
-    const sortBySelect = document.getElementById('sort-by');
-    const sortOrderSelect = document.getElementById('sort-order');
-
-    const prevPageBtn = document.getElementById('prev-page-btn');
-    const nextPageBtn = document.getElementById('next-page-btn');
-    const pageInfoSpan = document.getElementById('page-info');
-
-    const loadingModal = document.getElementById('loading-modal');
-    const progressCircle = document.getElementById('progressCircle');
-    const progressText = document.getElementById('progressText');
-    const statusText = document.getElementById('statusText');
-    const substatusText = document.getElementById('substatusText');
-    const uploadIcon = document.querySelector('.upload-icon');
-    const successCheck = document.getElementById('successCheck');
-    const steps = {
-        1: document.getElementById('step1'),
-        2: document.getElementById('step2'),
-        3: document.getElementById('step3')
+    // ===== ELEMENTOS DOM =====
+    const elements = {
+        openModalBtn: document.getElementById('open-post-modal'),
+        newPostModal: document.getElementById('new-post-modal'),
+        closeModalBtn: document.getElementById('close-post-modal'),
+        postForm: document.getElementById('post-form'),
+        muralContainer: document.getElementById('mural-container'),
+        enlargedImageModal: document.getElementById('enlarged-image-modal'),
+        enlargedImage: document.getElementById('enlarged-image'),
+        closeEnlargedImageBtn: document.getElementById('close-enlarged-image-modal'),
+        searchInput: document.getElementById('search-input'),
+        sortBySelect: document.getElementById('sort-by'),
+        sortOrderSelect: document.getElementById('sort-order'),
+        prevPageBtn: document.getElementById('prev-page-btn'),
+        nextPageBtn: document.getElementById('next-page-btn'),
+        pageInfoSpan: document.getElementById('page-info'),
+        loadingModal: document.getElementById('loading-modal'),
+        progressCircle: document.getElementById('progressCircle'),
+        progressText: document.getElementById('progressText'),
+        statusText: document.getElementById('statusText'),
+        substatusText: document.getElementById('substatusText'),
+        uploadIcon: document.querySelector('.upload-icon'),
+        successCheck: document.getElementById('successCheck'),
+        steps: {
+            1: document.getElementById('step1'),
+            2: document.getElementById('step2'),
+            3: document.getElementById('step3')
+        }
     };
 
-    // Criar overlay para cards expandidos
+    // ===== OVERLAY PARA CARDS EXPANDIDOS =====
     const postOverlay = document.createElement('div');
     postOverlay.className = 'post-overlay';
     document.body.appendChild(postOverlay);
 
-    // Classe para gerenciar o loading moderno
+    // ===== CLASSE LOADING MANAGER =====
     class LoadingManager {
         constructor() {
             this.circumference = 2 * Math.PI * 54;
-            if (progressCircle) {
-                progressCircle.style.strokeDasharray = this.circumference;
-                progressCircle.style.strokeDashoffset = this.circumference;
+            if (elements.progressCircle) {
+                elements.progressCircle.style.strokeDasharray = this.circumference;
+                elements.progressCircle.style.strokeDashoffset = this.circumference;
             }
         }
 
         show() {
-            if (postForm) postForm.style.display = 'none';
-            if (loadingModal) {
-                loadingModal.style.display = 'flex';
-                loadingModal.classList.add('show');
+            if (elements.postForm) elements.postForm.style.display = 'none';
+            if (elements.loadingModal) {
+                elements.loadingModal.style.display = 'flex';
+                elements.loadingModal.classList.add('show');
             }
             this.reset();
             this.updateProgress(0, 'Preparando envio...', 'Validando dados');
         }
 
         hide() {
-            if (loadingModal) {
-                loadingModal.classList.add('hide');
+            if (elements.loadingModal) {
+                elements.loadingModal.classList.add('hide');
                 setTimeout(() => {
-                    loadingModal.style.display = 'none';
-                    loadingModal.classList.remove('show', 'hide');
-                    if (postForm) postForm.style.display = 'block';
+                    elements.loadingModal.style.display = 'none';
+                    elements.loadingModal.classList.remove('show', 'hide');
+                    if (elements.postForm) elements.postForm.style.display = 'block';
                 }, 300);
             }
         }
 
         reset() {
-            // Resetar todos os elementos
-            Object.values(steps).forEach(step => {
-                if (step) {
-                    step.classList.remove('active', 'completed');
-                }
+            Object.values(elements.steps).forEach(step => {
+                if (step) step.classList.remove('active', 'completed');
             });
             
-            if (uploadIcon) uploadIcon.style.display = 'block';
-            if (successCheck) {
-                successCheck.style.display = 'none';
-                successCheck.classList.remove('show');
+            if (elements.uploadIcon) elements.uploadIcon.style.display = 'block';
+            if (elements.successCheck) {
+                elements.successCheck.style.display = 'none';
+                elements.successCheck.classList.remove('show');
             }
             
-            // Resetar círculo de progresso
-            if (progressCircle) {
-                progressCircle.style.strokeDashoffset = this.circumference;
+            if (elements.progressCircle) {
+                elements.progressCircle.style.strokeDashoffset = this.circumference;
             }
         }
 
         updateProgress(percent, message, submessage = '') {
-            // Atualizar círculo de progresso
-            if (progressCircle) {
+            if (elements.progressCircle) {
                 const offset = this.circumference - (percent / 100) * this.circumference;
-                progressCircle.style.strokeDashoffset = offset;
+                elements.progressCircle.style.strokeDashoffset = offset;
             }
             
-            // Atualizar textos
-            if (progressText) progressText.textContent = Math.round(percent) + '%';
-            if (statusText) statusText.textContent = message;
-            if (substatusText) substatusText.textContent = submessage;
+            if (elements.progressText) elements.progressText.textContent = Math.round(percent) + '%';
+            if (elements.statusText) elements.statusText.textContent = message;
+            if (elements.substatusText) elements.substatusText.textContent = submessage;
             
-            // Atualizar indicadores de etapa
             this.updateSteps(percent);
         }
 
         updateSteps(percent) {
-            if (percent >= 20 && steps[1]) {
-                steps[1].classList.add('active');
+            if (percent >= 20 && elements.steps[1]) {
+                elements.steps[1].classList.add('active');
             }
-            if (percent >= 60 && steps[2]) {
-                if (steps[1]) steps[1].classList.replace('active', 'completed');
-                steps[2].classList.add('active');
+            if (percent >= 60 && elements.steps[2]) {
+                if (elements.steps[1]) elements.steps[1].classList.replace('active', 'completed');
+                elements.steps[2].classList.add('active');
             }
-            if (percent >= 90 && steps[3]) {
-                if (steps[2]) steps[2].classList.replace('active', 'completed');
-                steps[3].classList.add('active');
+            if (percent >= 90 && elements.steps[3]) {
+                if (elements.steps[2]) elements.steps[2].classList.replace('active', 'completed');
+                elements.steps[3].classList.add('active');
             }
         }
 
         showSuccess(message = 'Postagem publicada com sucesso!') {
-            if (steps[3]) steps[3].classList.replace('active', 'completed');
-            if (uploadIcon) uploadIcon.style.display = 'none';
-            if (successCheck) {
-                successCheck.style.display = 'block';
-                successCheck.classList.add('show');
+            if (elements.steps[3]) elements.steps[3].classList.replace('active', 'completed');
+            if (elements.uploadIcon) elements.uploadIcon.style.display = 'none';
+            if (elements.successCheck) {
+                elements.successCheck.style.display = 'block';
+                elements.successCheck.classList.add('show');
             }
-            if (statusText) statusText.textContent = message;
-            if (substatusText) substatusText.textContent = 'Redirecionando...';
+            if (elements.statusText) elements.statusText.textContent = message;
+            if (elements.substatusText) elements.substatusText.textContent = 'Redirecionando...';
             this.updateProgress(100, message, 'Concluído');
         }
 
         showError(message = 'Erro durante o processo') {
-            if (statusText) statusText.textContent = message;
-            if (substatusText) substatusText.textContent = 'Tente novamente';
+            if (elements.statusText) elements.statusText.textContent = message;
+            if (elements.substatusText) elements.substatusText.textContent = 'Tente novamente';
             
-            // Adicionar classe de erro
             const container = document.querySelector('.loading-container');
             if (container) container.classList.add('error-state');
             
@@ -204,23 +202,13 @@ document.addEventListener('DOMContentLoaded', () => {
             collapseCard(expandedCard.element);
         }
 
-        // Adicionar classe expanded
         cardElement.classList.add('expanded');
         postOverlay.classList.add('active');
-        
-        // Desabilitar scroll do body
         document.body.style.overflow = 'hidden';
         
-        // Armazenar referência
-        expandedCard = {
-            element: cardElement,
-            post: post
-        };
-
-        // Atualizar conteúdo expandido
+        expandedCard = { element: cardElement, post: post };
         updateExpandedContent(cardElement, post);
-
-        // Focus no card expandido para acessibilidade
+        
         cardElement.setAttribute('tabindex', '-1');
         cardElement.focus();
     }
@@ -230,88 +218,76 @@ document.addEventListener('DOMContentLoaded', () => {
         
         cardElement.classList.remove('expanded');
         postOverlay.classList.remove('active');
-        
-        // Reabilitar scroll do body
         document.body.style.overflow = '';
-        
-        // Limpar referência
         expandedCard = null;
-        
         cardElement.removeAttribute('tabindex');
     }
 
     function updateExpandedContent(cardElement, post) {
-        // Atualizar descrição completa
         const description = cardElement.querySelector('.post-description');
         if (description && post.description) {
             description.style.webkitLineClamp = 'unset';
             description.textContent = post.description;
         }
 
-        // Tornar tags clicáveis no modo expandido
         const tags = cardElement.querySelectorAll('.post-tags span');
         tags.forEach(tag => {
             tag.style.cursor = 'pointer';
             tag.onclick = (e) => {
                 e.stopPropagation();
-                const tagText = tag.textContent.substring(1); // Remove #
-                searchInput.value = `tag:${tagText}`;
+                const tagText = tag.textContent.substring(1);
+                elements.searchInput.value = `tag:${tagText}`;
                 collapseCard(cardElement);
                 currentPage = 1;
                 fetchPosts();
             };
         });
 
-        // Tornar botões visíveis
         const editDeleteButtons = cardElement.querySelector('.edit-delete-buttons');
         if (editDeleteButtons) {
             editDeleteButtons.style.opacity = '1';
         }
     }
 
-    // Event listeners para expansão
-    postOverlay.addEventListener('click', () => {
-        if (expandedCard) {
-            collapseCard(expandedCard.element);
-        }
-    });
-
-    // ESC para fechar card expandido
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && expandedCard) {
-            collapseCard(expandedCard.element);
-        }
-    });
-
+    // ===== SELETOR DE CORES =====
     function initializeColorSelector() {
         console.log('🎨 Inicializando seletor de cores...');
         const colorSwatches = document.querySelectorAll('.color-selector .color-swatch');
+        
         if (colorSwatches.length === 0) {
             console.error('❌ Nenhuma cor encontrada!');
             return false;
         }
-        colorSwatches.forEach((swatch, index) => {
-            swatch.replaceWith(swatch.cloneNode(true));
+
+        colorSwatches.forEach((swatch) => {
+            // Remove listeners antigos clonando o elemento
+            const newSwatch = swatch.cloneNode(true);
+            swatch.parentNode.replaceChild(newSwatch, swatch);
         });
+
+        // Adiciona novos listeners
         const newColorSwatches = document.querySelectorAll('.color-selector .color-swatch');
-        newColorSwatches.forEach((swatch, index) => {
+        newColorSwatches.forEach((swatch) => {
             swatch.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 newColorSwatches.forEach(s => s.classList.remove('selected'));
                 swatch.classList.add('selected');
             });
+
             swatch.addEventListener('mouseenter', () => {
                 if (!swatch.classList.contains('selected')) {
                     swatch.style.transform = 'scale(1.1)';
                 }
             });
+
             swatch.addEventListener('mouseleave', () => {
                 if (!swatch.classList.contains('selected')) {
                     swatch.style.transform = 'scale(1)';
                 }
             });
         });
+
         console.log('✅ Seletor de cores inicializado com sucesso!');
         return true;
     }
@@ -326,43 +302,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if (openModalBtn) {
-        openModalBtn.addEventListener('click', () => {
-            newPostModal.style.display = 'block';
-            resetPostModal();
-            setTimeout(() => {
-                const success = initializeColorSelector();
-                if (success) {
-                    ensureColorSelection();
-                } else {
-                    console.error('❌ Falha ao inicializar seletor de cores');
-                }
-            }, 150);
-        });
-    }
-
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', () => {
-            newPostModal.style.display = 'none';
-            postForm.reset();
-        });
-    }
-
-    if (closeEnlargedImageBtn) {
-        closeEnlargedImageBtn.addEventListener('click', () => {
-            enlargedImageModal.style.display = 'none';
-        });
-    }
-
-    window.addEventListener('click', (event) => {
-        if (event.target === newPostModal) {
-            newPostModal.style.display = 'none';
-            postForm.reset();
-        }
-        if (event.target === enlargedImageModal) {
-            enlargedImageModal.style.display = 'none';
-        }
-    });
+    // ===== FUNÇÕES AUXILIARES =====
+    const formatarDataExibicao = (data) => {
+        if (!data) return 'N/A';
+        const partes = data.split('T')[0].split('-');
+        return `${partes[2]}-${partes[1]}-${partes[0]}`;
+    };
 
     function resetPostModal() {
         document.getElementById('modal-title').textContent = 'Nova Postagem';
@@ -370,8 +315,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('post-id').value = '';
         document.getElementById('post-image').required = true;
         document.getElementById('image-info').style.display = 'none';
-        postForm.style.display = 'block';
-        postForm.reset();
+        elements.postForm.style.display = 'block';
+        elements.postForm.reset();
         
         setTimeout(() => {
             const colorSwatches = document.querySelectorAll('.color-selector .color-swatch');
@@ -383,6 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 50);
     }
 
+    // ===== UPLOAD DE IMAGEM =====
     async function uploadImage(imageFile) {
         if (!imageFile) {
             console.warn('Nenhum arquivo de imagem selecionado.');
@@ -422,13 +368,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingManager.showError('Todas as APIs de imagem falharam');
         return null;
     }
-    
-    const formatarDataExibicao = (data) => {
-        if (!data) return 'N/A';
-        const partes = data.split('T')[0].split('-');
-        return `${partes[2]}-${partes[1]}-${partes[0]}`;
-    };
 
+    // ===== CRIAÇÃO DE ELEMENTOS POST =====
     function createPostElement(post) {
         const postCard = document.createElement('div');
         postCard.classList.add('post-card', 'compact');
@@ -485,7 +426,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Event listeners
         postCard.addEventListener('click', (e) => {
-            // Não expandir se clicou em botões ou imagem
             if (e.target.classList.contains('edit-btn') || 
                 e.target.classList.contains('delete-btn') ||
                 e.target.classList.contains('post-image') ||
@@ -495,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
             expandCard(postCard, post);
         });
 
-        // Clique na imagem para ampliar (funciona tanto no modo compacto quanto expandido)
+        // Clique na imagem para ampliar
         const postImage = postCard.querySelector('.post-image');
         postImage.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -527,9 +467,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        muralContainer.appendChild(postCard);
+        elements.muralContainer.appendChild(postCard);
     }
 
+    // ===== MODAL DE EDIÇÃO =====
     function openEditModal(post) {
         document.getElementById('modal-title').textContent = 'Editar Postagem';
         document.getElementById('submit-post-btn').textContent = 'Salvar Alterações';
@@ -541,9 +482,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('photo-date').value = post.photo_date ? post.photo_date.split('T')[0] : '';
         document.getElementById('post-image').required = false;
         document.getElementById('image-info').style.display = 'block';
-        newPostModal.style.display = 'block';
+        elements.newPostModal.style.display = 'block';
         
-        // Fechar card expandido se estiver aberto
         if (expandedCard) {
             collapseCard(expandedCard.element);
         }
@@ -568,10 +508,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 150);
     }
 
+    // ===== BUSCAR POSTS =====
     async function fetchPosts() {
-        const sortBy = sortBySelect.value;
-        const sortOrder = sortOrderSelect.value;
-        const searchTerm = searchInput.value;
+        const sortBy = elements.sortBySelect.value;
+        const sortOrder = elements.sortOrderSelect.value;
+        const searchTerm = elements.searchInput.value;
         const queryParams = new URLSearchParams({
             limit: postsPerPage,
             page: currentPage,
@@ -589,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const posts = data.posts;
             totalPosts = data.total;
             
-            muralContainer.innerHTML = '';
+            elements.muralContainer.innerHTML = '';
             
             if (posts.length === 0) {
                 const noPostsMessage = document.createElement('div');
@@ -597,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 noPostsMessage.textContent = searchTerm ? 
                     `Nenhuma postagem encontrada para "${searchTerm}"` : 
                     'Nenhuma postagem encontrada';
-                muralContainer.appendChild(noPostsMessage);
+                elements.muralContainer.appendChild(noPostsMessage);
             } else {
                 posts.forEach(post => createPostElement(post));
             }
@@ -608,44 +549,149 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Erro ao buscar postagens. Verifique sua conexão ou a API.');
         }
     }
-    
+
+    // ===== CONTROLES DE PAGINAÇÃO =====
     function updatePaginationControls() {
         const totalPages = Math.ceil(totalPosts / postsPerPage);
-        pageInfoSpan.textContent = `Página ${currentPage} de ${totalPages}`;
-        prevPageBtn.disabled = currentPage === 1;
-        nextPageBtn.disabled = currentPage * postsPerPage >= totalPosts;
+        elements.pageInfoSpan.textContent = `Página ${currentPage} de ${totalPages}`;
+        elements.prevPageBtn.disabled = currentPage === 1;
+        elements.nextPageBtn.disabled = currentPage * postsPerPage >= totalPosts;
     }
 
-    // Event listeners para busca e filtros
-    if (searchInput) {
-        searchInput.addEventListener('keypress', (e) => {
+    // ===== DELETAR POST =====
+    async function deletePost(postId, createdAt) {
+        const fiveMinutesAgo = new Date(new Date() - (EDIT_TIME_LIMIT_MINUTES * 60 * 1000));
+        if (new Date(createdAt) < fiveMinutesAgo) {
+            alert('Não é possível excluir esta postagem. O limite de 5 minutos foi excedido.');
+            return;
+        }
+        if (!confirm(`Tem certeza que deseja excluir a postagem?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/api/posts?id=${postId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao excluir a postagem');
+            }
+            localStorage.removeItem('createdPostId');
+            localStorage.removeItem('createdPostTime');
+            
+            if (expandedCard && expandedCard.post.id === postId) {
+                collapseCard(expandedCard.element);
+            }
+            
+            fetchPosts();
+        } catch (error) {
+            console.error('Erro ao excluir postagem:', error);
+            alert('Erro ao excluir a postagem. Tente novamente.');
+        }
+    }
+
+    // ===== FUNÇÃO GLOBAL PARA AMPLIAR IMAGEM =====
+    window.enlargeImage = (imageUrl) => {
+        elements.enlargedImage.src = imageUrl;
+        elements.enlargedImageModal.style.display = 'block';
+    };
+
+    // ===== EVENT LISTENERS PRINCIPAIS =====
+    
+    // Modal de nova postagem
+    if (elements.openModalBtn) {
+        elements.openModalBtn.addEventListener('click', () => {
+            elements.newPostModal.style.display = 'block';
+            resetPostModal();
+            setTimeout(() => {
+                const success = initializeColorSelector();
+                if (success) {
+                    ensureColorSelection();
+                } else {
+                    console.error('❌ Falha ao inicializar seletor de cores');
+                }
+            }, 150);
+        });
+    }
+
+    if (elements.closeModalBtn) {
+        elements.closeModalBtn.addEventListener('click', () => {
+            elements.newPostModal.style.display = 'none';
+            elements.postForm.reset();
+        });
+    }
+
+    if (elements.closeEnlargedImageBtn) {
+        elements.closeEnlargedImageBtn.addEventListener('click', () => {
+            elements.enlargedImageModal.style.display = 'none';
+        });
+    }
+
+    // Clicks fora dos modais
+    window.addEventListener('click', (event) => {
+        if (event.target === elements.newPostModal) {
+            elements.newPostModal.style.display = 'none';
+            elements.postForm.reset();
+        }
+        if (event.target === elements.enlargedImageModal) {
+            elements.enlargedImageModal.style.display = 'none';
+        }
+    });
+
+    // Overlay de cards expandidos
+    postOverlay.addEventListener('click', () => {
+        if (expandedCard) {
+            collapseCard(expandedCard.element);
+        }
+    });
+
+    // Busca e filtros
+    if (elements.searchInput) {
+        elements.searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 currentPage = 1;
                 fetchPosts();
             }
         });
+
+        elements.searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentPage = 1;
+                fetchPosts();
+            }, 500);
+        });
     }
     
-    sortBySelect.addEventListener('change', () => { currentPage = 1; fetchPosts(); });
-    sortOrderSelect.addEventListener('change', () => { currentPage = 1; fetchPosts(); });
+    elements.sortBySelect.addEventListener('change', () => { 
+        currentPage = 1; 
+        fetchPosts(); 
+    });
     
-    prevPageBtn.addEventListener('click', () => {
+    elements.sortOrderSelect.addEventListener('change', () => { 
+        currentPage = 1; 
+        fetchPosts(); 
+    });
+    
+    // Paginação
+    elements.prevPageBtn.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage--;
             fetchPosts();
         }
     });
     
-    nextPageBtn.addEventListener('click', () => {
+    elements.nextPageBtn.addEventListener('click', () => {
         if (currentPage * postsPerPage < totalPosts) {
             currentPage++;
             fetchPosts();
         }
     });
 
-    // Form submission
-    if (postForm) {
-        postForm.addEventListener('submit', async (event) => {
+    // ===== FORM SUBMISSION =====
+    if (elements.postForm) {
+        elements.postForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             
             const postId = document.getElementById('post-id').value;
@@ -763,58 +809,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    async function deletePost(postId, createdAt) {
-        const fiveMinutesAgo = new Date(new Date() - (EDIT_TIME_LIMIT_MINUTES * 60 * 1000));
-        if (new Date(createdAt) < fiveMinutesAgo) {
-            alert('Não é possível excluir esta postagem. O limite de 5 minutos foi excedido.');
-            return;
-        }
-        if (!confirm(`Tem certeza que deseja excluir a postagem?`)) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_URL}/api/posts?id=${postId}`, {
-                method: 'DELETE'
-            });
-
-            if (!response.ok) {
-                throw new Error('Erro ao excluir a postagem');
-            }
-            localStorage.removeItem('createdPostId');
-            localStorage.removeItem('createdPostTime');
-            
-            // Fechar card expandido se for o que está sendo excluído
-            if (expandedCard && expandedCard.post.id === postId) {
-                collapseCard(expandedCard.element);
-            }
-            
-            fetchPosts();
-        } catch (error) {
-            console.error('Erro ao excluir postagem:', error);
-            alert('Erro ao excluir a postagem. Tente novamente.');
-        }
-    }
-
-    // Função global para ampliar imagem
-    window.enlargeImage = (imageUrl) => {
-        enlargedImage.src = imageUrl;
-        enlargedImageModal.style.display = 'block';
-    };
-
-    // Melhorias de acessibilidade
+    // ===== EVENT LISTENERS GLOBAIS =====
+    
+    // ESC para fechar card expandido
     document.addEventListener('keydown', (e) => {
-        // Tab navigation para cards
-        if (e.key === 'Tab' && !e.shiftKey) {
-            const cards = document.querySelectorAll('.post-card:not(.expanded)');
-            // Implementar navegação por tab se necessário
+        if (e.key === 'Escape' && expandedCard) {
+            collapseCard(expandedCard.element);
         }
     });
 
-    // Otimização para dispositivos touch
-    let touchStartY = 0;
-    let touchEndY = 0;
-
+    // Touch events para dispositivos móveis
     document.addEventListener('touchstart', (e) => {
         touchStartY = e.changedTouches[0].screenY;
     });
@@ -828,45 +832,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Otimização de performance - lazy loading para imagens
-    const imageObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                if (img.dataset.src) {
-                    img.src = img.dataset.src;
-                    img.removeAttribute('data-src');
-                    observer.unobserve(img);
-                }
-            }
-        });
-    });
-
-    // Aplicar lazy loading quando necessário
-    function applyLazyLoading() {
-        const images = document.querySelectorAll('.post-image[data-src]');
-        images.forEach(img => imageObserver.observe(img));
-    }
-
-    // Debounce para busca
-    let searchTimeout;
-    if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                currentPage = 1;
-                fetchPosts();
-            }, 500);
-        });
-    }
-
-    // Inicializar aplicação
+    // ===== INICIALIZAÇÃO =====
     console.log('🚀 Iniciando aplicação com sistema de cards expansíveis...');
     fetchPosts();
     
-    // Log de inicialização
+    // Log de inicialização com informações do grid
     setTimeout(() => {
         console.log(`✅ Aplicação iniciada com sucesso!`);
         console.log(`📱 Grid responsivo: ${window.innerWidth >= 1200 ? '4' : window.innerWidth >= 768 ? '3' : '2'} colunas`);
+        console.log(`🎯 Sistema de cards expansíveis ativo!`);
     }, 1000);
 });
