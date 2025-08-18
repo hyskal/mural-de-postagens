@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 1.9: Organização completa - Separado CSS do HTML, corrigidos estilos duplicados e conflitantes, sistema de grid 4 colunas funcionando perfeitamente.
  * Versão 1.8: Implementado sistema de cards compactos expansíveis - 4 colunas no desktop, 2 no mobile, com visualização compacta que expande ao clicar mostrando todos os detalhes.
  * Versão 1.7: Correção completa do sistema de loading - removidos estilos conflitantes, unificado o design em um loading moderno com círculo de progresso, animações suaves e indicadores de etapa funcionais.
  * Versão 1.6: Refinados os estilos do container de controle com melhorias na responsividade, efeitos focus e compatibilidade cross-browser para selects personalizados.
- * Versão 1.5: Adicionados novos estilos para o container de controle e elementos de busca/ordenação, garantindo um design moderno e responsivo sem afetar o restante do layout.
  */
 :root {
     --primary-color: #2c3e50;
@@ -57,6 +57,11 @@ header h1 {
     margin: 0;
     font-size: 28px;
     font-weight: 700;
+}
+
+header h1 a {
+    color: inherit;
+    text-decoration: none;
 }
 
 .main-container {
@@ -723,6 +728,7 @@ header h1 {
 
 .modal-content form input[type="text"],
 .modal-content form input[type="date"],
+.modal-content form input[type="file"],
 .modal-content form textarea {
     padding: 10px;
     border: 1px solid #ddd;
@@ -930,6 +936,19 @@ header h1 {
         transform: scale(1.05); 
         opacity: 1; 
     }
+}
+
+.progress-circle {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 32px auto;
+}
+
+.progress-circle svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
 }
 
 .progress-circle .track {
@@ -1234,17 +1253,4 @@ footer p {
 .close-expanded-card:focus {
     outline: 2px solid white;
     outline-offset: 2px;
-} {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    margin: 0 auto 32px auto;
 }
-
-.progress-circle svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
-}
-
-.progress-circle
