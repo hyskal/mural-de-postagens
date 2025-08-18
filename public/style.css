@@ -1,4 +1,3 @@
-
 /**
  * CHANGELOG
  *
@@ -8,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 1.8: Implementado sistema de cards compactos expansíveis - 4 colunas no desktop, 2 no mobile, com visualização compacta que expande ao clicar mostrando todos os detalhes.
  * Versão 1.7: Correção completa do sistema de loading - removidos estilos conflitantes, unificado o design em um loading moderno com círculo de progresso, animações suaves e indicadores de etapa funcionais.
  * Versão 1.6: Refinados os estilos do container de controle com melhorias na responsividade, efeitos focus e compatibilidade cross-browser para selects personalizados.
  * Versão 1.5: Adicionados novos estilos para o container de controle e elementos de busca/ordenação, garantindo um design moderno e responsivo sem afetar o restante do layout.
- * Versão 1.4: Implementada a ofuscação simples Base64 para as chaves das APIs de upload de imagem, resolvendo os erros de requisição 400.
  */
 :root {
     --primary-color: #2c3e50;
@@ -61,9 +60,10 @@ header h1 {
 }
 
 .main-container {
-    max-width: 900px;
+    max-width: 1400px; /* Aumentado para acomodar 4 colunas */
     width: 100%;
     margin: 20px auto;
+    padding: 0 20px;
 }
 
 /* ESTILOS APRIMORADOS PARA O CONTROLS-CONTAINER */
@@ -76,7 +76,7 @@ header h1 {
     padding: 24px;
     margin: 20px auto 32px auto;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    max-width: 900px;
+    max-width: 1400px;
     width: 100%;
 }
 
@@ -268,122 +268,300 @@ header h1 {
     }
 }
 
-/* Estilos do mural de postagens */
+/* ===== NOVO SISTEMA DE GRID RESPONSIVO ===== */
 #mural-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    padding: 20px;
+    gap: 16px;
+    padding: 20px 0;
 }
 
+/* Mobile: 2 colunas */
+@media (max-width: 767px) {
+    #mural-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+}
+
+/* Tablet: 3 colunas */
+@media (min-width: 768px) and (max-width: 1199px) {
+    #mural-container {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+    }
+}
+
+/* Desktop: 4 colunas */
+@media (min-width: 1200px) {
+    #mural-container {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+}
+
+/* ===== CARDS COMPACTOS COM EXPANSÃO ===== */
 .post-card {
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    transition: transform 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    cursor: pointer;
+    position: relative;
+    height: fit-content;
 }
 
 .post-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
 }
 
-.post-card h3 {
-    margin-top: 0;
-    font-size: 1.5em;
-    color: var(--primary-color);
+/* Estado compacto (padrão) */
+.post-card.compact {
+    height: auto;
 }
 
-.post-image-container {
-    margin: 15px 0;
+/* Estado expandido */
+.post-card.expanded {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    z-index: 1500;
+    overflow-y: auto;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.post-card.expanded:hover {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Overlay para cards expandidos */
+.post-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    display: flex;
-    justify-content: center;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    z-index: 1400;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.post-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Conteúdo dos cards */
+.post-card-content {
+    padding: 12px;
+}
+
+.post-card.expanded .post-card-content {
+    padding: 24px;
+}
+
+/* Título */
+.post-title {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-color);
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.post-card.expanded .post-title {
+    font-size: 20px;
+    -webkit-line-clamp: unset;
+    margin-bottom: 16px;
+}
+
+/* Container da imagem */
+.post-image-container {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.post-card.expanded .post-image-container {
+    margin-bottom: 16px;
+    border-radius: 12px;
 }
 
 .post-image {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: transform 0.2s ease;
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.post-card.expanded .post-image {
+    height: 200px;
 }
 
 .post-image:hover {
-    transform: scale(1.05);
+    transform: scale(1.02);
 }
 
+/* Descrição */
 .post-description {
-    font-size: 1em;
+    font-size: 12px;
     color: var(--text-color);
-    margin: 10px 0;
-    overflow-wrap: break-word;
-    word-break: break-all;
+    line-height: 1.4;
+    margin: 0 0 8px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
-.post-meta {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    font-size: 0.9em;
-    color: var(--secondary-color);
-    margin-top: 15px;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
-    padding-top: 10px;
+.post-card.expanded .post-description {
+    font-size: 14px;
+    -webkit-line-clamp: unset;
+    margin-bottom: 16px;
+    line-height: 1.6;
 }
 
-.post-meta .post-author, .post-meta .post-date {
-    margin: 2px 0;
-}
-
-/* Tags das postagens */
+/* Tags compactas */
 .post-tags {
-    margin: 10px 0;
+    margin: 6px 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    justify-content: center;
+    gap: 4px;
+}
+
+.post-card.expanded .post-tags {
+    margin: 12px 0 16px 0;
+    gap: 6px;
 }
 
 .post-tags span {
     background: var(--primary-color);
     color: white;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8em;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
-.post-tags span:hover {
+.post-card.expanded .post-tags span {
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.post-card.expanded .post-tags span:hover {
     background: var(--secondary-color);
     transform: scale(1.05);
 }
 
-/* Botões de edição e exclusão */
-.edit-delete-buttons {
-    margin-top: 15px;
+/* Meta informações compactas */
+.post-meta {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    font-size: 10px;
+    color: var(--secondary-color);
+    gap: 2px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.post-card.expanded .post-meta {
+    font-size: 12px;
+    gap: 4px;
+    padding-top: 12px;
+    margin-top: 16px;
+}
+
+.post-author, .post-date {
+    margin: 0;
+    font-weight: 500;
+}
+
+.post-card.expanded .post-author {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Botão de fechar para cards expandidos */
+.close-expanded-card {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.post-card.expanded .close-expanded-card {
+    display: flex;
+}
+
+.close-expanded-card:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+/* Botões de edição/exclusão */
+.edit-delete-buttons {
+    margin-top: 8px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.post-card.expanded .edit-delete-buttons {
+    margin-top: 16px;
+    opacity: 1;
 }
 
 .edit-btn, .delete-btn {
-    padding: 6px 12px;
+    padding: 4px 8px;
     border: none;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-    transition: all 0.3s ease;
+    font-size: 10px;
+    font-weight: 500;
+    transition: all 0.2s ease;
     font-family: 'Poppins', sans-serif;
+}
+
+.post-card.expanded .edit-btn,
+.post-card.expanded .delete-btn {
+    padding: 6px 12px;
+    font-size: 11px;
 }
 
 .edit-btn {
@@ -406,7 +584,51 @@ header h1 {
     transform: translateY(-1px);
 }
 
-/* Estilos dos modais */
+/* Indicador de expansão */
+.expand-indicator {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    background: rgba(44, 62, 80, 0.8);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.post-card:hover .expand-indicator {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.post-card.expanded .expand-indicator {
+    display: none;
+}
+
+/* Animações para expansão */
+@keyframes expandCard {
+    from {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+.post-card.expanded {
+    animation: expandCard 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Estilos dos modais existentes */
 .modal {
     display: none;
     position: fixed;
@@ -710,19 +932,6 @@ header h1 {
     }
 }
 
-.progress-circle {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    margin: 0 auto 32px auto;
-}
-
-.progress-circle svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
-}
-
 .progress-circle .track {
     fill: none;
     stroke: #f1f3f4;
@@ -890,8 +1099,59 @@ footer p {
     font-weight: 400;
 }
 
-/* Responsividade */
+/* Responsividade específica para cards */
 @media (max-width: 480px) {
+    .main-container {
+        padding: 0 10px;
+    }
+    
+    #mural-container {
+        gap: 10px;
+    }
+    
+    .post-image {
+        height: 120px;
+    }
+    
+    .post-title {
+        font-size: 13px;
+    }
+    
+    .post-description {
+        font-size: 11px;
+    }
+    
+    .post-meta {
+        font-size: 9px;
+    }
+    
+    .post-tags span {
+        font-size: 9px;
+        padding: 2px 4px;
+    }
+    
+    .expand-indicator {
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
+        bottom: 6px;
+        right: 6px;
+    }
+    
+    .post-card.expanded {
+        width: 95%;
+        max-width: none;
+    }
+    
+    .close-expanded-card {
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+        top: 8px;
+        right: 8px;
+    }
+    
+    /* Loading responsivo */
     .loading-container {
         padding: 32px 24px;
         margin: 20px;
@@ -919,3 +1179,72 @@ footer p {
         height: 10px;
     }
 }
+
+/* Melhorias para tablets */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .post-image {
+        height: 150px;
+    }
+    
+    .post-title {
+        font-size: 15px;
+    }
+    
+    .post-description {
+        font-size: 13px;
+    }
+}
+
+/* Melhorias para desktop */
+@media (min-width: 1200px) {
+    .post-image {
+        height: 160px;
+    }
+    
+    .post-card.expanded .post-image {
+        height: 250px;
+    }
+}
+
+/* Animações suaves para transições de hover */
+.post-card * {
+    transition: inherit;
+}
+
+/* Estilo para quando não há posts */
+.no-posts {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--secondary-color);
+    font-size: 16px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Acessibilidade - Focus states */
+.post-card:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.close-expanded-card:focus {
+    outline: 2px solid white;
+    outline-offset: 2px;
+} {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 32px auto;
+}
+
+.progress-circle svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.progress-circle
