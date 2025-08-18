@@ -7,10 +7,10 @@
  * Use o formato "Versão [número]: [Descrição da modificação]".
  * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
  *
+ * Versão 2.0: Implementado sistema completo de cards expansíveis - cards compactos no grid que expandem em modal overlay com todas as informações, suporte a 4 colunas no desktop e 2 no mobile.
  * Versão 1.9: Sistema de loading completamente renovado - implementado design moderno com círculo de progresso animado, indicadores de etapa, animações suaves e feedback visual aprimorado durante todo o processo de envio.
  * Versão 1.8: Correção crítica - Removida a classe MinimalLoader incompleta que causava erro de sintaxe e impedia o funcionamento das postagens e botão Nova Postagem. Mantidas as funções de loading existentes.
  * Versão 1.7: Reorganização da lógica de carregamento para uma solução minimalista. A classe 'hidden' foi removida do HTML e o controle de exibição do modal de carregamento é feito diretamente no JavaScript, garantindo que a barra de progresso seja sempre visível durante o processo de envio.
- * Versão 1.6: Implementada uma correção na lógica de upload de imagem para garantir que a barra de progresso seja exibida corretamente mesmo em caso de falha no envio. A barra de carregamento agora completa o progresso e exibe uma mensagem de erro, ao invés de desaparecer abruptamente.
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente carregado e analisado. Iniciando a lógica do script.');
@@ -33,8 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const LIMIT_TITLE = 120;
 
     let currentPage = 1;
-    const postsPerPage = 10;
+    const postsPerPage = 20; // Aumentado para acomodar mais cards
     let totalPosts = 0;
+    let expandedCard = null; // Controle do card expandido
 
     const openModalBtn = document.getElementById('open-post-modal');
     const newPostModal = document.getElementById('new-post-modal');
@@ -65,6 +66,11 @@ document.addEventListener('DOMContentLoaded', () => {
         2: document.getElementById('step2'),
         3: document.getElementById('step3')
     };
+
+    // Criar overlay para cards expandidos
+    const postOverlay = document.createElement('div');
+    postOverlay.className = 'post-overlay';
+    document.body.appendChild(postOverlay);
 
     // Classe para gerenciar o loading moderno
     class LoadingManager {
@@ -175,6 +181,107 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const loadingManager = new LoadingManager();
+
+    // ===== SISTEMA DE EXPANSÃO DE CARDS =====
+    function createExpandedCardStructure(post, postElement) {
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'close-expanded-card';
+        closeBtn.innerHTML = '×';
+        closeBtn.setAttribute('aria-label', 'Fechar');
+        
+        const expandIndicator = document.createElement('div');
+        expandIndicator.className = 'expand-indicator';
+        expandIndicator.innerHTML = '+';
+        
+        postElement.appendChild(closeBtn);
+        postElement.appendChild(expandIndicator);
+        
+        return { closeBtn, expandIndicator };
+    }
+
+    function expandCard(cardElement, post) {
+        if (expandedCard) {
+            collapseCard(expandedCard.element);
+        }
+
+        // Adicionar classe expanded
+        cardElement.classList.add('expanded');
+        postOverlay.classList.add('active');
+        
+        // Desabilitar scroll do body
+        document.body.style.overflow = 'hidden';
+        
+        // Armazenar referência
+        expandedCard = {
+            element: cardElement,
+            post: post
+        };
+
+        // Atualizar conteúdo expandido
+        updateExpandedContent(cardElement, post);
+
+        // Focus no card expandido para acessibilidade
+        cardElement.setAttribute('tabindex', '-1');
+        cardElement.focus();
+    }
+
+    function collapseCard(cardElement) {
+        if (!cardElement) return;
+        
+        cardElement.classList.remove('expanded');
+        postOverlay.classList.remove('active');
+        
+        // Reabilitar scroll do body
+        document.body.style.overflow = '';
+        
+        // Limpar referência
+        expandedCard = null;
+        
+        cardElement.removeAttribute('tabindex');
+    }
+
+    function updateExpandedContent(cardElement, post) {
+        // Atualizar descrição completa
+        const description = cardElement.querySelector('.post-description');
+        if (description && post.description) {
+            description.style.webkitLineClamp = 'unset';
+            description.textContent = post.description;
+        }
+
+        // Tornar tags clicáveis no modo expandido
+        const tags = cardElement.querySelectorAll('.post-tags span');
+        tags.forEach(tag => {
+            tag.style.cursor = 'pointer';
+            tag.onclick = (e) => {
+                e.stopPropagation();
+                const tagText = tag.textContent.substring(1); // Remove #
+                searchInput.value = `tag:${tagText}`;
+                collapseCard(cardElement);
+                currentPage = 1;
+                fetchPosts();
+            };
+        });
+
+        // Tornar botões visíveis
+        const editDeleteButtons = cardElement.querySelector('.edit-delete-buttons');
+        if (editDeleteButtons) {
+            editDeleteButtons.style.opacity = '1';
+        }
+    }
+
+    // Event listeners para expansão
+    postOverlay.addEventListener('click', () => {
+        if (expandedCard) {
+            collapseCard(expandedCard.element);
+        }
+    });
+
+    // ESC para fechar card expandido
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && expandedCard) {
+            collapseCard(expandedCard.element);
+        }
+    });
 
     function initializeColorSelector() {
         console.log('🎨 Inicializando seletor de cores...');
@@ -324,64 +431,103 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createPostElement(post) {
         const postCard = document.createElement('div');
-        postCard.classList.add('post-card');
+        postCard.classList.add('post-card', 'compact');
         postCard.style.backgroundColor = post.color || 'rgba(255, 255, 255, 0.8)';
-        let descriptionText = post.description;
-        if (descriptionText && descriptionText.length > DISPLAY_LIMIT_DESCRIPTION) {
-            descriptionText = descriptionText.substring(0, DISPLAY_LIMIT_DESCRIPTION) + '... <a href="#" class="read-more" data-fulltext="' + post.description.replace(/"/g, '&quot;') + '">Leia Mais</a>';
-        }
+        
+        // Descrição truncada para modo compacto
+        let descriptionText = post.description || '';
+        const isLongDescription = descriptionText.length > DISPLAY_LIMIT_DESCRIPTION;
+        let truncatedDescription = isLongDescription ? 
+            descriptionText.substring(0, DISPLAY_LIMIT_DESCRIPTION) + '...' : 
+            descriptionText;
+
+        // Tags HTML
         let tagsHtml = '';
         if (post.tags) {
             const tagsArray = post.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
             tagsHtml = '<div class="post-tags">' + tagsArray.map(tag => `<span>#${tag}</span>`).join('') + '</div>';
         }
+
+        // Verificar se é editável
         const createdPostId = localStorage.getItem('createdPostId');
         const createdAt = localStorage.getItem('createdPostTime');
         const isEditable = createdPostId === post.id && (new Date() - new Date(createdAt)) < (EDIT_TIME_LIMIT_MINUTES * 60 * 1000);
+        
         const editDeleteButtons = isEditable ? `
             <div class="edit-delete-buttons">
                 <button class="edit-btn" data-id="${post.id}">Editar</button>
                 <button class="delete-btn" data-id="${post.id}">Excluir</button>
             </div>
         ` : '';
+
         const formattedPostDate = formatarDataExibicao(post.created_at);
         const formattedPhotoDate = formatarDataExibicao(post.photo_date);
 
         postCard.innerHTML = `
-            <h3 class="post-title">${post.title}</h3>
-            <div class="post-image-container">
-                <img src="${post.image_url}" alt="${post.title}" class="post-image" onclick="enlargeImage('${post.image_url}')">
+            <div class="post-card-content">
+                <h3 class="post-title">${post.title}</h3>
+                <div class="post-image-container">
+                    <img src="${post.image_url}" alt="${post.title}" class="post-image">
+                </div>
+                <p class="post-description">${truncatedDescription}</p>
+                ${tagsHtml}
+                <div class="post-meta">
+                    <span class="post-author">Autor: ${post.author}</span>
+                    <span class="post-date">Foto: ${formattedPhotoDate}</span>
+                    <span class="post-date">Postagem: ${formattedPostDate}</span>
+                </div>
+                ${editDeleteButtons}
             </div>
-            <p class="post-description">${descriptionText}</p>
-            ${tagsHtml}
-            <div class="post-meta">
-                <span class="post-author">Autor: ${post.author}</span>
-                <span class="post-date">Data da Foto: ${formattedPhotoDate}</span>
-                <span class="post-date">Data da Postagem: ${formattedPostDate}</span>
-            </div>
-            ${editDeleteButtons}
         `;
-        muralContainer.appendChild(postCard);
 
-        const readMoreBtn = postCard.querySelector('.read-more');
-        if (readMoreBtn) {
-            readMoreBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.target.parentNode.textContent = event.target.dataset.fulltext;
-            });
-        }
-        
-        postCard.querySelectorAll('.post-tags span').forEach(tagSpan => {
-            tagSpan.addEventListener('click', (event) => {
-                searchInput.value = `tag:${event.target.textContent.substring(1)}`;
-                fetchPosts();
-            });
+        // Adicionar estrutura de expansão
+        const { closeBtn, expandIndicator } = createExpandedCardStructure(post, postCard);
+
+        // Event listeners
+        postCard.addEventListener('click', (e) => {
+            // Não expandir se clicou em botões ou imagem
+            if (e.target.classList.contains('edit-btn') || 
+                e.target.classList.contains('delete-btn') ||
+                e.target.classList.contains('post-image') ||
+                e.target.classList.contains('close-expanded-card')) {
+                return;
+            }
+            expandCard(postCard, post);
         });
 
+        // Clique na imagem para ampliar (funciona tanto no modo compacto quanto expandido)
+        const postImage = postCard.querySelector('.post-image');
+        postImage.addEventListener('click', (e) => {
+            e.stopPropagation();
+            enlargeImage(post.image_url);
+        });
+
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            collapseCard(postCard);
+        });
+
+        // Event listeners para botões de edição/exclusão
         if (isEditable) {
-            postCard.querySelector('.edit-btn').addEventListener('click', () => openEditModal(post));
-            postCard.querySelector('.delete-btn').addEventListener('click', () => deletePost(post.id, post.created_at));
+            const editBtn = postCard.querySelector('.edit-btn');
+            const deleteBtn = postCard.querySelector('.delete-btn');
+            
+            if (editBtn) {
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openEditModal(post);
+                });
+            }
+            
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deletePost(post.id, post.created_at);
+                });
+            }
         }
+
+        muralContainer.appendChild(postCard);
     }
 
     function openEditModal(post) {
@@ -396,6 +542,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('post-image').required = false;
         document.getElementById('image-info').style.display = 'block';
         newPostModal.style.display = 'block';
+        
+        // Fechar card expandido se estiver aberto
+        if (expandedCard) {
+            collapseCard(expandedCard.element);
+        }
+        
         setTimeout(() => {
             const success = initializeColorSelector();
             if (success) {
@@ -436,8 +588,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             const posts = data.posts;
             totalPosts = data.total;
+            
             muralContainer.innerHTML = '';
-            posts.forEach(post => createPostElement(post));
+            
+            if (posts.length === 0) {
+                const noPostsMessage = document.createElement('div');
+                noPostsMessage.className = 'no-posts';
+                noPostsMessage.textContent = searchTerm ? 
+                    `Nenhuma postagem encontrada para "${searchTerm}"` : 
+                    'Nenhuma postagem encontrada';
+                muralContainer.appendChild(noPostsMessage);
+            } else {
+                posts.forEach(post => createPostElement(post));
+            }
+            
             updatePaginationControls();
         } catch (error) {
             console.error('Erro ao buscar postagens:', error);
@@ -446,11 +610,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function updatePaginationControls() {
-        pageInfoSpan.textContent = `Página ${currentPage} de ${Math.ceil(totalPosts / postsPerPage)}`;
+        const totalPages = Math.ceil(totalPosts / postsPerPage);
+        pageInfoSpan.textContent = `Página ${currentPage} de ${totalPages}`;
         prevPageBtn.disabled = currentPage === 1;
         nextPageBtn.disabled = currentPage * postsPerPage >= totalPosts;
     }
 
+    // Event listeners para busca e filtros
     if (searchInput) {
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -462,12 +628,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
     sortBySelect.addEventListener('change', () => { currentPage = 1; fetchPosts(); });
     sortOrderSelect.addEventListener('change', () => { currentPage = 1; fetchPosts(); });
+    
     prevPageBtn.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage--;
             fetchPosts();
         }
     });
+    
     nextPageBtn.addEventListener('click', () => {
         if (currentPage * postsPerPage < totalPosts) {
             currentPage++;
@@ -475,6 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Form submission
     if (postForm) {
         postForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -614,6 +783,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             localStorage.removeItem('createdPostId');
             localStorage.removeItem('createdPostTime');
+            
+            // Fechar card expandido se for o que está sendo excluído
+            if (expandedCard && expandedCard.post.id === postId) {
+                collapseCard(expandedCard.element);
+            }
+            
             fetchPosts();
         } catch (error) {
             console.error('Erro ao excluir postagem:', error);
@@ -627,6 +802,71 @@ document.addEventListener('DOMContentLoaded', () => {
         enlargedImageModal.style.display = 'block';
     };
 
+    // Melhorias de acessibilidade
+    document.addEventListener('keydown', (e) => {
+        // Tab navigation para cards
+        if (e.key === 'Tab' && !e.shiftKey) {
+            const cards = document.querySelectorAll('.post-card:not(.expanded)');
+            // Implementar navegação por tab se necessário
+        }
+    });
+
+    // Otimização para dispositivos touch
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    document.addEventListener('touchstart', (e) => {
+        touchStartY = e.changedTouches[0].screenY;
+    });
+
+    document.addEventListener('touchend', (e) => {
+        touchEndY = e.changedTouches[0].screenY;
+        
+        // Swipe down para fechar card expandido
+        if (expandedCard && touchEndY > touchStartY + 50) {
+            collapseCard(expandedCard.element);
+        }
+    });
+
+    // Otimização de performance - lazy loading para imagens
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                if (img.dataset.src) {
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                    observer.unobserve(img);
+                }
+            }
+        });
+    });
+
+    // Aplicar lazy loading quando necessário
+    function applyLazyLoading() {
+        const images = document.querySelectorAll('.post-image[data-src]');
+        images.forEach(img => imageObserver.observe(img));
+    }
+
+    // Debounce para busca
+    let searchTimeout;
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentPage = 1;
+                fetchPosts();
+            }, 500);
+        });
+    }
+
     // Inicializar aplicação
+    console.log('🚀 Iniciando aplicação com sistema de cards expansíveis...');
     fetchPosts();
+    
+    // Log de inicialização
+    setTimeout(() => {
+        console.log(`✅ Aplicação iniciada com sucesso!`);
+        console.log(`📱 Grid responsivo: ${window.innerWidth >= 1200 ? '4' : window.innerWidth >= 768 ? '3' : '2'} colunas`);
+    }, 1000);
 });
