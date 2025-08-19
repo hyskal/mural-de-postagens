@@ -1,215 +1,180 @@
-this.reset();
+/**
+ * CHANGELOG
+ *
+ * Instruções para Revisores:
+ * Este bloco de comentários registra as modificações significativas do arquivo.
+ * Cada nova modificação deve ser adicionada no topo da lista.
+ * Use o formato "Versão [número]: [Descrição da modificação]".
+ * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
+ *
+ * Versão 2.1: Código JavaScript completamente reorganizado - removidos duplicados, lógica otimizada, sistema de cards expansíveis funcionando perfeitamente.
+ * Versão 2.0: Implementado sistema completo de cards expansíveis - cards compactos no grid que expandem em modal overlay com todas as informações, suporte a 4 colunas no desktop e 2 no mobile.
+ * Versão 1.9: Sistema de loading completamente renovado - implementado design moderno com círculo de progresso animado, indicadores de etapa, animações suaves e feedback visual aprimorado durante todo o processo de envio.
+ * Versão 1.8: Correção crítica - Removida a classe MinimalLoader incompleta que causava erro de sintaxe e impedia o funcionamento das postagens e botão Nova Postagem. Mantidas as funções de loading existentes.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 DOM carregado - Iniciando aplicação do Mural de Postagens...');
+
+    // ===== CONFIGURAÇÕES E CONSTANTES =====
+    const API_URL = 'https://mural-de-postagens.vercel.app';
+    const obfuscatedKey1 = 'OGMyMjNmZjljM2MyNjc4MzJjMjZhYWNiMjEwMTQ2MDI=';
+    const obfuscatedKey2 = 'ZWNjMjlhYjNhNDZmOGZhODc2MWViZGVlOGExZTg1MGQ=';
+    
+    function getSecureValue(obfuscated) {
+        return atob(obfuscated);
+    }
+
+    const IMG_API_CONFIGS = [
+        { name: 'ImgBB - eduk', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureValue(obfuscatedKey1) },
+        { name: 'ImgBB - enova', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureValue(obfuscatedKey2) }
+    ];
+    
+    const EDIT_TIME_LIMIT_MINUTES = 5;
+    const LIMIT_DESCRIPTION = 300;
+    const DISPLAY_LIMIT_DESCRIPTION = 100;
+    const LIMIT_TITLE = 120;
+
+    // ===== VARIÁVEIS GLOBAIS =====
+    let currentPage = 1;
+    const postsPerPage = 20;
+    let totalPosts = 0;
+    let expandedCard = null;
+    let searchTimeout;
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    // ===== ELEMENTOS DOM =====
+    const elements = {
+        openModalBtn: document.getElementById('open-post-modal'),
+        newPostModal: document.getElementById('new-post-modal'),
+        closeModalBtn: document.getElementById('close-post-modal'),
+        postForm: document.getElementById('post-form'),
+        muralContainer: document.getElementById('mural-container'),
+        enlargedImageModal: document.getElementById('enlarged-image-modal'),
+        enlargedImage: document.getElementById('enlarged-image'),
+        closeEnlargedImageBtn: document.getElementById('close-enlarged-image-modal'),
+        searchInput: document.getElementById('search-input'),
+        sortBySelect: document.getElementById('sort-by'),
+        sortOrderSelect: document.getElementById('sort-order'),
+        prevPageBtn: document.getElementById('prev-page-btn'),
+        nextPageBtn: document.getElementById('next-page-btn'),
+        pageInfoSpan: document.getElementById('page-info'),
+        loadingModal: document.getElementById('loading-modal'),
+        progressCircle: document.getElementById('progressCircle'),
+        progressText: document.getElementById('progressText'),
+        statusText: document.getElementById('statusText'),
+        substatusText: document.getElementById('substatusText'),
+        uploadIcon: document.querySelector('.upload-icon'),
+        successCheck: document.getElementById('successCheck'),
+        steps: {
+            1: document.getElementById('step1'),
+            2: document.getElementById('step2'),
+            3: document.getElementById('step3')
+        }
+    };
+
+    // ===== OVERLAY PARA CARDS EXPANDIDOS =====
+    const postOverlay = document.createElement('div');
+    postOverlay.className = 'post-overlay';
+    document.body.appendChild(postOverlay);
+
+    // ===== CLASSE LOADING MANAGER =====
+    class LoadingManager {
+        constructor() {
+            this.circumference = 2 * Math.PI * 54;
+            if (elements.progressCircle) {
+                elements.progressCircle.style.strokeDasharray = this.circumference;
+                elements.progressCircle.style.strokeDashoffset = this.circumference;
+            }
+        }
+
+        show() {
+            if (elements.postForm) elements.postForm.style.display = 'none';
+            if (elements.loadingModal) {
+                elements.loadingModal.style.display = 'flex';
+                elements.loadingModal.classList.add('show');
+            }
+            this.reset();
             this.updateProgress(0, 'Preparando envio...', 'Validando dados');
         }
 
         hide() {
-            console.log('✅ Escondendo loading...');
-            
             if (elements.loadingModal) {
                 elements.loadingModal.classList.add('hide');
-                this.isShowing = false;
-                
                 setTimeout(() => {
                     elements.loadingModal.style.display = 'none';
                     elements.loadingModal.classList.remove('show', 'hide');
-                    
-                    // Restaura o formulário
-                    if (elements.postForm) {
-                        elements.postForm.style.display = 'block';
-                    }
-                    
-                    // Restaura estado do body se for mobile
-                    if (DeviceDetector.isMobile()) {
-                        this.restoreBodyState();
-                    }
+                    if (elements.postForm) elements.postForm.style.display = 'block';
                 }, 300);
             }
         }
 
         reset() {
-            // Reset dos indicadores de etapa
             Object.values(elements.steps).forEach(step => {
-                if (step) {
-                    step.classList.remove('active', 'completed');
-                }
+                if (step) step.classList.remove('active', 'completed');
             });
             
-            // Mostra ícone de upload, esconde sucesso
-            if (elements.uploadIcon) {
-                elements.uploadIcon.style.display = 'block';
-            }
-            
+            if (elements.uploadIcon) elements.uploadIcon.style.display = 'block';
             if (elements.successCheck) {
                 elements.successCheck.style.display = 'none';
                 elements.successCheck.classList.remove('show');
             }
             
-            // Reset do círculo de progresso
             if (elements.progressCircle) {
                 elements.progressCircle.style.strokeDashoffset = this.circumference;
-            }
-            
-            // Reset de estados de erro
-            const container = document.querySelector('.loading-container');
-            if (container) {
-                container.classList.remove('error-state');
             }
         }
 
         updateProgress(percent, message, submessage = '') {
-            console.log(`📊 Progresso: ${percent}% - ${message}`);
-            
-            // Atualiza círculo de progresso
             if (elements.progressCircle) {
                 const offset = this.circumference - (percent / 100) * this.circumference;
                 elements.progressCircle.style.strokeDashoffset = offset;
             }
             
-            // Atualiza textos
-            if (elements.progressText) {
-                elements.progressText.textContent = Math.round(percent) + '%';
-            }
+            if (elements.progressText) elements.progressText.textContent = Math.round(percent) + '%';
+            if (elements.statusText) elements.statusText.textContent = message;
+            if (elements.substatusText) elements.substatusText.textContent = submessage;
             
-            if (elements.statusText) {
-                elements.statusText.textContent = message;
-            }
-            
-            if (elements.substatusText) {
-                elements.substatusText.textContent = submessage;
-            }
-            
-            // Atualiza indicadores de etapa
             this.updateSteps(percent);
-            
-            // Garante que o modal permaneça centralizado em mobile
-            if (DeviceDetector.isMobile() && this.isShowing && (percent === 0 || percent >= 95)) {
-                setTimeout(() => {
-                    this.repositionModal();
-                }, 100);
-            }
         }
 
         updateSteps(percent) {
-            // Etapa 1: Preparação (0-20%)
-            if (percent >= 10 && elements.steps[1]) {
+            if (percent >= 20 && elements.steps[1]) {
                 elements.steps[1].classList.add('active');
             }
-            
-            // Etapa 2: Upload/Processamento (20-70%)
-            if (percent >= 40 && elements.steps[2]) {
-                if (elements.steps[1]) {
-                    elements.steps[1].classList.replace('active', 'completed');
-                }
+            if (percent >= 60 && elements.steps[2]) {
+                if (elements.steps[1]) elements.steps[1].classList.replace('active', 'completed');
                 elements.steps[2].classList.add('active');
             }
-            
-            // Etapa 3: Finalização (70-100%)
-            if (percent >= 80 && elements.steps[3]) {
-                if (elements.steps[2]) {
-                    elements.steps[2].classList.replace('active', 'completed');
-                }
+            if (percent >= 90 && elements.steps[3]) {
+                if (elements.steps[2]) elements.steps[2].classList.replace('active', 'completed');
                 elements.steps[3].classList.add('active');
             }
         }
 
         showSuccess(message = 'Postagem publicada com sucesso!') {
-            console.log('🎉 Mostrando sucesso:', message);
-            
-            // Completa última etapa
-            if (elements.steps[3]) {
-                elements.steps[3].classList.replace('active', 'completed');
-            }
-            
-            // Esconde upload, mostra sucesso
-            if (elements.uploadIcon) {
-                elements.uploadIcon.style.display = 'none';
-            }
-            
+            if (elements.steps[3]) elements.steps[3].classList.replace('active', 'completed');
+            if (elements.uploadIcon) elements.uploadIcon.style.display = 'none';
             if (elements.successCheck) {
                 elements.successCheck.style.display = 'block';
-                
-                // Pequeno delay para garantir que o display seja aplicado
-                setTimeout(() => {
-                    elements.successCheck.classList.add('show');
-                }, 50);
+                elements.successCheck.classList.add('show');
             }
-            
-            // Atualiza textos
-            if (elements.statusText) {
-                elements.statusText.textContent = message;
-            }
-            
-            if (elements.substatusText) {
-                elements.substatusText.textContent = 'Redirecionando...';
-            }
-            
-            // Garante progresso 100%
+            if (elements.statusText) elements.statusText.textContent = message;
+            if (elements.substatusText) elements.substatusText.textContent = 'Redirecionando...';
             this.updateProgress(100, message, 'Concluído');
-            
-            // Reposiciona para garantir visibilidade em mobile
-            if (DeviceDetector.isMobile()) {
-                setTimeout(() => {
-                    this.repositionModal();
-                }, 100);
-            }
         }
 
         showError(message = 'Erro durante o processo') {
-            console.error('❌ Mostrando erro:', message);
+            if (elements.statusText) elements.statusText.textContent = message;
+            if (elements.substatusText) elements.substatusText.textContent = 'Tente novamente';
             
-            // Atualiza textos de erro
-            if (elements.statusText) {
-                elements.statusText.textContent = message;
-            }
-            
-            if (elements.substatusText) {
-                elements.substatusText.textContent = DeviceDetector.isMobile() ? 
-                    'Toque para tentar novamente' : 'Tente novamente';
-            }
-            
-            // Adiciona estado de erro
             const container = document.querySelector('.loading-container');
-            if (container) {
-                container.classList.add('error-state');
-            }
+            if (container) container.classList.add('error-state');
             
-            // Auto-hide após 3 segundos
             setTimeout(() => {
                 this.hide();
+                if (container) container.classList.remove('error-state');
             }, 3000);
-        }
-        
-        // Método utilitário para debounce
-        debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
-
-        // Método público para forçar correção
-        forceRepositioning() {
-            if (this.isShowing && DeviceDetector.isMobile()) {
-                this.repositionModal();
-            }
-        }
-
-        // Cleanup method
-        destroy() {
-            this.restoreBodyState();
-            
-            if (DeviceDetector.isMobile()) {
-                // Remove event listeners específicos
-                document.removeEventListener('touchmove', this.preventBounce);
-                window.removeEventListener('orientationchange', this.handleOrientationChange);
-            }
-            
-            console.log('📱 Loading Manager destruído');
         }
     }
 
@@ -672,12 +637,6 @@ this.reset();
         if (event.target === elements.enlargedImageModal) {
             elements.enlargedImageModal.style.display = 'none';
         }
-        
-        // Clique no loading em estado de erro (mobile)
-        if (event.target === elements.loadingModal && 
-            elements.loadingModal.querySelector('.loading-container.error-state')) {
-            loadingManager.hide();
-        }
     });
 
     // Overlay de cards expandidos
@@ -873,382 +832,14 @@ this.reset();
         }
     });
 
-    // ===== EVENT LISTENERS ESPECÍFICOS PARA MOBILE =====
-    
-    if (DeviceDetector.isMobile()) {
-        console.log('📱 Dispositivo móvel detectado - configurando event listeners específicos...');
-        
-        // Handler para visibilitychange (volta do background)
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && loadingManager.isShowing) {
-                setTimeout(() => {
-                    loadingManager.forceRepositioning();
-                }, 100);
-            }
-        });
-        
-        // Handler global para mudanças de orientação
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                // Recalcula layout de todos os modais abertos
-                const openModals = document.querySelectorAll('.modal[style*="display: block"], #loading-modal.show');
-                openModals.forEach(modal => {
-                    if (modal.style.display !== 'none') {
-                        modal.style.display = 'none';
-                        modal.offsetHeight; // Force reflow
-                        modal.style.display = modal.id === 'loading-modal' ? 'flex' : 'block';
-                    }
-                });
-                
-                // Reposiciona cards expandidos
-                if (expandedCard) {
-                    setTimeout(() => {
-                        const cardElement = expandedCard.element;
-                        if (cardElement) {
-                            cardElement.style.transform = 'translate(-50%, -50%)';
-                        }
-                    }, 100);
-                }
-            }, 200);
-        });
-        
-        // Previne zoom indesejado em inputs
-        const inputs = document.querySelectorAll('input, textarea, select');
-        inputs.forEach(input => {
-            input.addEventListener('focus', (e) => {
-                // Scroll para o elemento em foco
-                setTimeout(() => {
-                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300);
-            });
-        });
-    }
-
     // ===== INICIALIZAÇÃO =====
     console.log('🚀 Iniciando aplicação com sistema de cards expansíveis...');
     fetchPosts();
     
-    // Log de inicialização com informações do dispositivo e grid
+    // Log de inicialização com informações do grid
     setTimeout(() => {
-        const deviceInfo = {
-            isMobile: DeviceDetector.isMobile(),
-            isIOS: DeviceDetector.isIOS(),
-            isAndroid: DeviceDetector.isAndroid(),
-            viewport: `${window.innerWidth}x${window.innerHeight}`,
-            orientation: DeviceDetector.isLandscapePhone() ? 'landscape' : 'portrait',
-            grid: window.innerWidth >= 1200 ? '4 colunas' : window.innerWidth >= 768 ? '3 colunas' : '2 colunas'
-        };
-        
-        console.log('✅ Aplicação iniciada com sucesso!', deviceInfo);
-        console.log('🎯 Sistema de cards expansíveis ativo!');
-        
-        if (DeviceDetector.isMobile()) {
-            console.log('📱 Correções mobile aplicadas:', {
-                loadingFix: '✅ Ativo',
-                touchEvents: '✅ Configurados',
-                orientationFix: '✅ Ativo',
-                scrollPrevention: '✅ Ativo'
-            });
-        }
+        console.log(`✅ Aplicação iniciada com sucesso!`);
+        console.log(`📱 Grid responsivo: ${window.innerWidth >= 1200 ? '4' : window.innerWidth >= 768 ? '3' : '2'} colunas`);
+        console.log(`🎯 Sistema de cards expansíveis ativo!`);
     }, 1000);
-    
-    // ===== CLEANUP NO UNLOAD =====
-    window.addEventListener('beforeunload', () => {
-        if (loadingManager && typeof loadingManager.destroy === 'function') {
-            loadingManager.destroy();
-        }
-    });
-});/**
- * CHANGELOG
- *
- * Instruções para Revisores:
- * Este bloco de comentários registra as modificações significativas do arquivo.
- * Cada nova modificação deve ser adicionada no topo da lista.
- * Use o formato "Versão [número]: [Descrição da modificação]".
- * Mantenha a lista limitada às 4 últimas alterações para clareza e concisão.
- *
- * Versão 2.2: Correção completa do sistema de loading para mobile - detecção automática de dispositivos, prevenção de scroll, reposicionamento inteligente, compatibilidade iOS/Android garantida.
- * Versão 2.1: Código JavaScript completamente reorganizado - removidos duplicados, lógica otimizada, sistema de cards expansíveis funcionando perfeitamente.
- * Versão 2.0: Implementado sistema completo de cards expansíveis - cards compactos no grid que expandem em modal overlay com todas as informações, suporte a 4 colunas no desktop e 2 no mobile.
- * Versão 1.9: Sistema de loading completamente renovado - implementado design moderno com círculo de progresso animado, indicadores de etapa, animações suaves e feedback visual aprimorado durante todo o processo de envio.
- */
-
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 DOM carregado - Iniciando aplicação do Mural de Postagens...');
-
-    // ===== CONFIGURAÇÕES E CONSTANTES =====
-    const API_URL = 'https://mural-de-postagens.vercel.app';
-    const obfuscatedKey1 = 'OGMyMjNmZjljM2MyNjc4MzJjMjZhYWNiMjEwMTQ2MDI=';
-    const obfuscatedKey2 = 'ZWNjMjlhYjNhNDZmOGZhODc2MWViZGVlOGExZTg1MGQ=';
-    
-    function getSecureValue(obfuscated) {
-        return atob(obfuscated);
-    }
-
-    const IMG_API_CONFIGS = [
-        { name: 'ImgBB - eduk', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureValue(obfuscatedKey1) },
-        { name: 'ImgBB - enova', endpoint: 'https://api.imgbb.com/1/upload', key: getSecureValue(obfuscatedKey2) }
-    ];
-    
-    const EDIT_TIME_LIMIT_MINUTES = 5;
-    const LIMIT_DESCRIPTION = 300;
-    const DISPLAY_LIMIT_DESCRIPTION = 100;
-    const LIMIT_TITLE = 120;
-
-    // ===== VARIÁVEIS GLOBAIS =====
-    let currentPage = 1;
-    const postsPerPage = 20;
-    let totalPosts = 0;
-    let expandedCard = null;
-    let searchTimeout;
-    let touchStartY = 0;
-    let touchEndY = 0;
-
-    // ===== DETECÇÃO DE DISPOSITIVOS =====
-    const DeviceDetector = {
-        isMobile: () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-        isIOS: () => /iPad|iPhone|iPod/.test(navigator.userAgent),
-        isAndroid: () => /Android/.test(navigator.userAgent),
-        isSmallScreen: () => window.innerWidth <= 480 || window.innerHeight <= 640,
-        isLandscapePhone: () => window.innerWidth > window.innerHeight && window.innerHeight <= 500 && DeviceDetector.isMobile()
-    };
-
-    // ===== ELEMENTOS DOM =====
-    const elements = {
-        openModalBtn: document.getElementById('open-post-modal'),
-        newPostModal: document.getElementById('new-post-modal'),
-        closeModalBtn: document.getElementById('close-post-modal'),
-        postForm: document.getElementById('post-form'),
-        muralContainer: document.getElementById('mural-container'),
-        enlargedImageModal: document.getElementById('enlarged-image-modal'),
-        enlargedImage: document.getElementById('enlarged-image'),
-        closeEnlargedImageBtn: document.getElementById('close-enlarged-image-modal'),
-        searchInput: document.getElementById('search-input'),
-        sortBySelect: document.getElementById('sort-by'),
-        sortOrderSelect: document.getElementById('sort-order'),
-        prevPageBtn: document.getElementById('prev-page-btn'),
-        nextPageBtn: document.getElementById('next-page-btn'),
-        pageInfoSpan: document.getElementById('page-info'),
-        loadingModal: document.getElementById('loading-modal'),
-        progressCircle: document.getElementById('progressCircle'),
-        progressText: document.getElementById('progressText'),
-        statusText: document.getElementById('statusText'),
-        substatusText: document.getElementById('substatusText'),
-        uploadIcon: document.querySelector('.upload-icon'),
-        successCheck: document.getElementById('successCheck'),
-        steps: {
-            1: document.getElementById('step1'),
-            2: document.getElementById('step2'),
-            3: document.getElementById('step3')
-        }
-    };
-
-    // ===== OVERLAY PARA CARDS EXPANDIDOS =====
-    const postOverlay = document.createElement('div');
-    postOverlay.className = 'post-overlay';
-    document.body.appendChild(postOverlay);
-
-    // ===== CLASSE LOADING MANAGER CORRIGIDA PARA MOBILE =====
-    class LoadingManager {
-        constructor() {
-            this.circumference = 2 * Math.PI * 54;
-            this.isShowing = false;
-            this.originalScrollY = 0;
-            this.originalBodyStyles = {};
-            
-            if (elements.progressCircle) {
-                elements.progressCircle.style.strokeDasharray = this.circumference;
-                elements.progressCircle.style.strokeDashoffset = this.circumference;
-            }
-            
-            // Bind dos métodos para manter contexto
-            this.show = this.show.bind(this);
-            this.hide = this.hide.bind(this);
-            this.handleOrientationChange = this.handleOrientationChange.bind(this);
-            this.preventBounce = this.preventBounce.bind(this);
-            
-            // Event listeners para dispositivos móveis
-            if (DeviceDetector.isMobile()) {
-                this.setupMobileEventListeners();
-            }
-        }
-        
-        setupMobileEventListeners() {
-            // Previne bounce scroll no iOS durante loading
-            document.addEventListener('touchmove', this.preventBounce, { passive: false });
-            
-            // Event listener para mudanças de orientação
-            window.addEventListener('orientationchange', () => {
-                setTimeout(() => {
-                    this.handleOrientationChange();
-                }, 200);
-            });
-            
-            // Resize handler
-            window.addEventListener('resize', this.debounce(() => {
-                this.handleResize();
-            }, 250));
-        }
-        
-        preventBounce(e) {
-            if (this.isShowing) {
-                // Permite scroll apenas dentro do container de loading
-                const target = e.target;
-                const loadingContainer = elements.loadingModal?.querySelector('.loading-container');
-                
-                if (!loadingContainer || !loadingContainer.contains(target)) {
-                    e.preventDefault();
-                    return false;
-                }
-            }
-        }
-        
-        handleOrientationChange() {
-            if (this.isShowing) {
-                console.log('🔄 Mudança de orientação durante loading');
-                setTimeout(() => {
-                    this.adjustLoadingForMobile();
-                    this.repositionModal();
-                }, 300);
-            }
-        }
-        
-        handleResize() {
-            if (this.isShowing) {
-                this.adjustLoadingForMobile();
-            }
-        }
-        
-        repositionModal() {
-            const modal = elements.loadingModal;
-            const container = modal?.querySelector('.loading-container');
-            
-            if (modal && container && this.isShowing) {
-                // Força recalculo do layout
-                modal.style.display = 'none';
-                modal.offsetHeight; // Trigger reflow
-                modal.style.display = 'flex';
-                
-                // Garante centralização
-                modal.style.alignItems = 'center';
-                modal.style.justifyContent = 'center';
-                
-                console.log('📍 Loading reposicionado para mobile');
-            }
-        }
-        
-        adjustLoadingForMobile() {
-            const loadingModal = elements.loadingModal;
-            const loadingContainer = loadingModal?.querySelector('.loading-container');
-            
-            if (!loadingModal || !loadingContainer) return;
-            
-            // Força hardware acceleration
-            loadingModal.style.transform = 'translate3d(0, 0, 0)';
-            loadingContainer.style.transform = 'translate3d(0, 0, 0)';
-            
-            // Ajustes específicos para telas pequenas
-            if (DeviceDetector.isSmallScreen()) {
-                loadingContainer.style.maxWidth = 'calc(100vw - 30px)';
-                loadingContainer.style.maxHeight = 'calc(100vh - 60px)';
-                loadingContainer.style.padding = '24px 20px';
-            }
-            
-            // Ajustes para orientação landscape em mobile
-            if (DeviceDetector.isLandscapePhone()) {
-                loadingContainer.style.maxHeight = 'calc(100vh - 40px)';
-                loadingContainer.style.padding = '20px 24px';
-            }
-        }
-        
-        saveCurrentState() {
-            // Salva posição de scroll atual
-            this.originalScrollY = window.scrollY || document.documentElement.scrollTop;
-            
-            // Salva estilos originais do body
-            const body = document.body;
-            this.originalBodyStyles = {
-                position: body.style.position,
-                top: body.style.top,
-                width: body.style.width,
-                overflow: body.style.overflow,
-                height: body.style.height
-            };
-        }
-        
-        lockBody() {
-            const body = document.body;
-            
-            // Aplica lock de scroll
-            body.style.position = 'fixed';
-            body.style.top = `-${this.originalScrollY}px`;
-            body.style.width = '100%';
-            body.style.overflow = 'hidden';
-            body.style.height = '100%';
-            
-            // Adiciona classe
-            body.classList.add('loading-active');
-            
-            // Específico para iOS
-            if (DeviceDetector.isIOS()) {
-                body.style.webkitOverflowScrolling = 'touch';
-                body.style.touchAction = 'none';
-            }
-        }
-        
-        restoreBodyState() {
-            const body = document.body;
-            
-            // Remove classe
-            body.classList.remove('loading-active');
-            
-            // Restaura estilos originais
-            Object.keys(this.originalBodyStyles).forEach(prop => {
-                if (this.originalBodyStyles[prop]) {
-                    body.style[prop] = this.originalBodyStyles[prop];
-                } else {
-                    body.style[prop] = '';
-                }
-            });
-            
-            // Restaura posição de scroll
-            window.scrollTo(0, this.originalScrollY);
-            
-            // Limpa propriedades específicas do iOS
-            if (DeviceDetector.isIOS()) {
-                body.style.webkitOverflowScrolling = '';
-                body.style.touchAction = '';
-            }
-        }
-
-        show() {
-            console.log('🔄 Mostrando loading...');
-            
-            // Salva estado atual se for mobile
-            if (DeviceDetector.isMobile()) {
-                this.saveCurrentState();
-                this.lockBody();
-            }
-            
-            // Esconde o formulário
-            if (elements.postForm) {
-                elements.postForm.style.display = 'none';
-            }
-            
-            // Mostra o modal
-            if (elements.loadingModal) {
-                elements.loadingModal.style.display = 'flex';
-                elements.loadingModal.classList.add('show');
-                this.isShowing = true;
-                
-                // Ajustes específicos para mobile
-                if (DeviceDetector.isMobile()) {
-                    setTimeout(() => {
-                        this.adjustLoadingForMobile();
-                        this.repositionModal();
-                    }, 50);
-                }
-            }
-            
-            this.reset();
-            this.updateProgress(0, 'Preparando envio...
+});
