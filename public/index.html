@@ -2,23 +2,34 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Mural de Postagens - Fundamentos de Laboratório Clínico</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Meta tags específicas para mobile -->
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="script.js" as="script">
 </head>
 <body>
     <header>
-        <h1><a href="#">Mural de Postagens</a></h1>
+        <h1><a href="#" aria-label="Página inicial do Mural de Postagens">Mural de Postagens</a></h1>
     </header>
 
     <div class="main-container">
         <div class="controls-container">
             <div class="header-controls">
-                <button id="open-post-modal" class="nova-postagem-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <button id="open-post-modal" class="nova-postagem-btn" aria-label="Criar nova postagem">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M5 12h14"></path>
                         <path d="M12 5v14"></path>
                     </svg>
@@ -27,22 +38,22 @@
 
                 <div class="search-controls">
                     <div class="search-input-container">
-                        <input type="text" id="search-input" class="search-input" placeholder="Buscar por título, autor ou tag..." value="">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <input type="text" id="search-input" class="search-input" placeholder="Buscar por título, autor ou tag..." value="" autocomplete="off" aria-label="Campo de busca">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <circle cx="11" cy="11" r="8"></circle>
                             <path d="m21 21-4.3-4.3"></path>
                         </svg>
                     </div>
 
                     <div class="select-controls">
-                        <select id="sort-by" class="select-trigger sort-select">
+                        <select id="sort-by" class="select-trigger sort-select" aria-label="Ordenar por">
                             <option value="created_at">Data da Postagem</option>
                             <option value="photo_date">Data da Foto</option>
                             <option value="title">Título</option>
                             <option value="author">Autor</option>
                         </select>
 
-                        <select id="sort-order" class="select-trigger sort-select">
+                        <select id="sort-order" class="select-trigger sort-select" aria-label="Ordem de classificação">
                             <option value="desc">Decrescente</option>
                             <option value="asc">Crescente</option>
                         </select>
@@ -51,51 +62,51 @@
             </div>
         </div>
         
-        <div id="mural-container">
+        <div id="mural-container" role="main" aria-label="Grid de postagens">
             <!-- Os cards serão inseridos aqui dinamicamente -->
         </div>
 
-        <div class="pagination-container">
-            <button id="prev-page-btn" disabled>Anterior</button>
-            <span id="page-info">Página 1</span>
-            <button id="next-page-btn">Próximo</button>
+        <div class="pagination-container" role="navigation" aria-label="Navegação de páginas">
+            <button id="prev-page-btn" disabled aria-label="Página anterior">Anterior</button>
+            <span id="page-info" aria-live="polite">Página 1</span>
+            <button id="next-page-btn" aria-label="Próxima página">Próximo</button>
         </div>
     </div>
 
     <!-- Modal para nova postagem -->
-    <div id="new-post-modal" class="modal">
+    <div id="new-post-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-content">
-            <span id="close-post-modal" class="close-btn">&times;</span>
+            <span id="close-post-modal" class="close-btn" aria-label="Fechar modal">&times;</span>
             <h2 id="modal-title">Nova Postagem</h2>
             <form id="post-form">
                 <input type="hidden" id="post-id">
                 
                 <div class="color-theme-container">
                     <label>Tema:</label>
-                    <div class="color-selector">
-                        <div class="color-swatch selected" data-color="rgba(255, 255, 255, 0.8)" style="background-color: rgba(255, 255, 255, 0.8);"></div>
-                        <div class="color-swatch" data-color="#EE82EE" style="background-color: #EE82EE;"></div>
-                        <div class="color-swatch" data-color="rgb(0,191,255)" style="background-color: rgb(0,191,255);"></div>
-                        <div class="color-swatch" data-color="rgb(127, 255, 212)" style="background-color: rgb(127, 255, 212);"></div>
-                        <div class="color-swatch" data-color="rgb(255, 222, 173)" style="background-color: rgb(255, 222, 173);"></div>
+                    <div class="color-selector" role="radiogroup" aria-label="Selecionar cor do tema">
+                        <div class="color-swatch selected" data-color="rgba(255, 255, 255, 0.8)" style="background-color: rgba(255, 255, 255, 0.8);" role="radio" aria-checked="true" aria-label="Cor branca" tabindex="0"></div>
+                        <div class="color-swatch" data-color="#EE82EE" style="background-color: #EE82EE;" role="radio" aria-checked="false" aria-label="Cor violeta" tabindex="0"></div>
+                        <div class="color-swatch" data-color="rgb(0,191,255)" style="background-color: rgb(0,191,255);" role="radio" aria-checked="false" aria-label="Cor azul" tabindex="0"></div>
+                        <div class="color-swatch" data-color="rgb(127, 255, 212)" style="background-color: rgb(127, 255, 212);" role="radio" aria-checked="false" aria-label="Cor verde água" tabindex="0"></div>
+                        <div class="color-swatch" data-color="rgb(255, 222, 173)" style="background-color: rgb(255, 222, 173);" role="radio" aria-checked="false" aria-label="Cor bege" tabindex="0"></div>
                     </div>
                 </div>
 
                 <label for="post-title">Título (max 120 caracteres):</label>
-                <input type="text" id="post-title" maxlength="120" required>
+                <input type="text" id="post-title" maxlength="120" required autocomplete="off" aria-describedby="title-help">
                 
                 <label for="post-image">Imagem:</label>
-                <input type="file" id="post-image" accept="image/*" required>
-                <p id="image-info" style="display:none;">Deixe em branco para manter a imagem atual.</p>
+                <input type="file" id="post-image" accept="image/*" required aria-describedby="image-help">
+                <p id="image-info" style="display:none;" role="note">Deixe em branco para manter a imagem atual.</p>
 
                 <label for="post-description">Descrição (max 300 caracteres):</label>
-                <textarea id="post-description" maxlength="300" required></textarea>
+                <textarea id="post-description" maxlength="300" required aria-describedby="description-help"></textarea>
 
                 <label for="post-author">Nome e Turma:</label>
-                <input type="text" id="post-author" required>
+                <input type="text" id="post-author" required autocomplete="name">
                 
                 <label for="post-tags">Tags (separadas por vírgula):</label>
-                <input type="text" id="post-tags" placeholder="Ex: coleta, análise, segurança">
+                <input type="text" id="post-tags" placeholder="Ex: coleta, análise, segurança" autocomplete="off">
                 
                 <label for="photo-date">Data da Foto:</label>
                 <input type="date" id="photo-date" required>
@@ -105,11 +116,11 @@
         </div>
     </div>
 
-    <!-- Modal de Loading Moderno -->
-    <div id="loading-modal">
+    <!-- Modal de Loading Moderno - Otimizado para Mobile -->
+    <div id="loading-modal" role="dialog" aria-modal="true" aria-labelledby="loading-title">
         <div class="loading-container">
             <!-- Ícone de upload -->
-            <div class="upload-icon">
+            <div class="upload-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="17,8 12,3 7,8"/>
@@ -118,35 +129,35 @@
             </div>
 
             <!-- Círculo de progresso -->
-            <div class="progress-circle">
-                <svg>
+            <div class="progress-circle" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <svg aria-hidden="true">
                     <circle class="track" cx="60" cy="60" r="54"/>
                     <circle class="progress" cx="60" cy="60" r="54" id="progressCircle"/>
                 </svg>
-                <div class="progress-text" id="progressText">0%</div>
+                <div class="progress-text" id="progressText" aria-live="polite">0%</div>
             </div>
 
             <!-- Textos de status -->
-            <div class="status-text" id="statusText">Preparando envio...</div>
-            <div class="substatus-text" id="substatusText">Iniciando processo</div>
+            <div class="status-text" id="statusText" aria-live="polite">Preparando envio...</div>
+            <div class="substatus-text" id="substatusText" aria-live="polite">Iniciando processo</div>
 
             <!-- Indicadores de etapa -->
-            <div class="step-indicators">
-                <div class="step" id="step1"></div>
-                <div class="step" id="step2"></div>
-                <div class="step" id="step3"></div>
+            <div class="step-indicators" role="progressbar" aria-label="Progresso das etapas">
+                <div class="step" id="step1" aria-label="Etapa 1"></div>
+                <div class="step" id="step2" aria-label="Etapa 2"></div>
+                <div class="step" id="step3" aria-label="Etapa 3"></div>
             </div>
 
             <!-- Ícone de sucesso -->
-            <div class="success-check" id="successCheck"></div>
+            <div class="success-check" id="successCheck" aria-hidden="true"></div>
         </div>
     </div>
 
     <!-- Modal para imagem ampliada -->
-    <div id="enlarged-image-modal" class="modal">
+    <div id="enlarged-image-modal" class="modal" role="dialog" aria-modal="true" aria-label="Imagem ampliada">
         <div class="modal-content-image">
-            <span id="close-enlarged-image-modal" class="close-btn">&times;</span>
-            <img id="enlarged-image" src="" alt="Imagem Ampliada">
+            <span id="close-enlarged-image-modal" class="close-btn" aria-label="Fechar imagem ampliada">&times;</span>
+            <img id="enlarged-image" src="" alt="Imagem Ampliada" loading="lazy">
         </div>
     </div>
 
@@ -154,6 +165,32 @@
         <p>&copy; 2025 lucas.batista.eduk@gmail.com | Todos os direitos reservados</p>
     </footer>
 
-    <script src="script.js"></script>
+    <!-- Scripts -->
+    <script src="script.js" defer></script>
+    
+    <!-- Service Worker para PWA (opcional) -->
+    <script>
+        // Registra service worker se disponível
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registrado com sucesso:', registration.scope);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW falhou ao registrar:', registrationError);
+                    });
+            });
+        }
+        
+        // Detecta mudanças de conectividade
+        window.addEventListener('online', () => {
+            console.log('📶 Conexão restaurada');
+        });
+        
+        window.addEventListener('offline', () => {
+            console.log('📵 Conexão perdida');
+        });
+    </script>
 </body>
 </html>
